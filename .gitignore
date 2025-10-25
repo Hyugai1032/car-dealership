@@ -1,0 +1,16 @@
+# node
+node_modules/
+frontend/node_modules/
+
+# php
+backend/vendor/
+backend/.env
+.env
+
+# build
+frontend/dist/
+backend/storage/
+
+# IDEs
+.vscode/
+*.log

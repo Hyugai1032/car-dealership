@@ -6,5 +6,5 @@ This project contains:
 ## 🚀 Setup
 ### Clone repo
 ```bash
-git clone https://github.com/<your-username>/car-dealership.git
+git clone https://github.com/Hyugai1032/car-dealership.git
 cd car-dealership

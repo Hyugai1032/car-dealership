@@ -29,14 +29,14 @@
   </style>
 </head>
 
-<body class="transition-colors duration-500 flex">
+<body class="flex transition-colors duration-500 overflow-x-hidden">
 <?php
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/sidebar.php';
-require_once __DIR__ . '/../includes/header.php';
+// require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<main class="flex-1 p-8 lg:ml-64 space-y-10">
+<main id="mainContent" class="flex-1 p-8 lg:ml-64 transition-all duration-300 space-y-10">
   <!-- Header -->
   <div class="flex items-center justify-between">
     <div>
@@ -213,6 +213,17 @@ new Chart(ctx2,{
     scales:{y:{beginAtZero:true}}
   }
 });
+
+
+// window.addEventListener("resize", () => {
+//   const main = document.getElementById("mainContent");
+//   if (window.innerWidth >= 1024) {
+//     main.classList.add("lg:ml-64");
+//   } else {
+//     main.classList.remove("lg:ml-64");
+//   }
+// });
+
 </script>
 </body>
 </html>

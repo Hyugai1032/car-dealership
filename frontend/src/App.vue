@@ -1,30 +1,40 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+  <div id="app">
+    <!-- Sidebar (stays visible) -->
+    <Sidebar />
+
+    <!-- Main content area (where pages show up) -->
+    <main class="main-content">
+      <router-view />
+    </main>
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
 
+<script setup>
+import Sidebar from "./components/Sidebar.vue";
+</script>
+
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+#app {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f4f7fb;
+  font-family: "Poppins", sans-serif;
+  color: #1e293b;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+
+/* Main page content */
+.main-content {
+  flex: 1;
+  margin-left: 16rem; /* matches your Sidebar width */
+  padding: 2rem;
+  transition: margin-left 0.3s ease;
 }
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+/* Make it more responsive */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 0;
+  }
 }
 </style>

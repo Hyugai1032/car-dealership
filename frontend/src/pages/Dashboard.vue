@@ -1,39 +1,88 @@
 
 
 <template>
-  <div class="dashboard">
-    <Header />
+  <main class="flex-1 p-8 lg:ml-64 space-y-10">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-4xl font-extrabold">Admin Dashboard</h1>
+        <p class="text-slate-400 text-lg">Welcome back — here's a quick overview.</p>
+      </div>
+      <button id="toggleTheme" class="px-5 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600">
+        Toggle Theme
+      </button>
+    </div>
 
-    <!-- Hero Section -->
-    <section id="car-showcase" class="hero-section">
-      <div :style="{ background: currentCar.bg }" class="hero-bg"></div>
-
-      <div class="hero-content">
-        <div class="hero-text">
-          <h2>{{ currentCar.name }}</h2>
-          <p>{{ currentCar.desc }}</p>
-          <div class="hero-buttons">
-            <button @click="prevCar">◀ Prev</button>
-            <button @click="nextCar">Next ▶</button>
+    <!-- HERO SHOWCASE (larger car slideshow) -->
+    <section id="car-showcase" class="relative rounded-3xl overflow-hidden shadow-2xl h-[400px] lg:h-[480px] flex items-center justify-between px-10">
+      <div id="showcase-bg" class="absolute inset-0 transition-all duration-700 z-0"></div>
+      <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between w-full gap-10">
+        <div class="flex-1 text-center lg:text-left">
+          <h2 id="car-name" class="text-5xl font-bold text-white mb-4 drop-shadow-md"></h2>
+          <p id="car-desc" class="text-lg text-slate-200 max-w-md mx-auto lg:mx-0"></p>
+          <div class="mt-8 flex justify-center lg:justify-start gap-4">
+            <button id="prevBtn" class="px-5 py-2 rounded bg-white/20 hover:bg-white/30">◀ Prev</button>
+            <button id="nextBtn" class="px-5 py-2 rounded bg-white/20 hover:bg-white/30">Next ▶</button>
+            <button id="pauseBtn" class="px-5 py-2 rounded bg-white/10 hover:bg-white/20">Pause</button>
           </div>
         </div>
-
-        <div class="hero-image">
-          <img :src="currentCar.img" alt="Car" />
+        <div class="flex-1 flex justify-center">
+          <img id="car-image" src="" alt="Car" class="w-full max-w-md object-contain drop-shadow-2xl transition-opacity duration-700 rounded-2xl" />
         </div>
       </div>
     </section>
 
-    <!-- Stats Section -->
-    <div class="stats-grid">
-      <div v-for="stat in stats" :key="stat.label" class="stat-card">
-        <div class="stat-label">{{ stat.label }}</div>
-        <div class="stat-value" :style="{ color: stat.color }">{{ stat.value }}</div>
+    <!-- DASHBOARD STATS GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="card p-6 rounded-xl shadow text-center">
+        <div class="text-slate-400 text-sm">Total Cars</div>
+        <div id="totalCars" class="text-4xl font-bold text-blue-500 mt-2">--</div>
+      </div>
+      <div class="card p-6 rounded-xl shadow text-center">
+        <div class="text-slate-400 text-sm">Dealers</div>
+        <div id="totalDealers" class="text-4xl font-bold text-emerald-500 mt-2">--</div>
+      </div>
+      <div class="card p-6 rounded-xl shadow text-center">
+        <div class="text-slate-400 text-sm">Pending Appointments</div>
+        <div id="pendingAppointments" class="text-4xl font-bold text-yellow-500 mt-2">--</div>
+      </div>
+      <div class="card p-6 rounded-xl shadow text-center">
+        <div class="text-slate-400 text-sm">Users</div>
+        <div id="totalUsers" class="text-4xl font-bold text-pink-500 mt-2">--</div>
       </div>
     </div>
 
-    <Footer />
-  </div>
+    <!-- ACTIVITY + CHARTS -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="card p-6 rounded-xl shadow lg:col-span-1">
+        <h3 class="text-lg font-semibold mb-4">Recent Activities</h3>
+        <ul id="recentActivities" class="text-slate-400 text-sm space-y-2">
+          <li>Loading...</li>
+        </ul>
+      </div>
+
+      <div class="card p-6 rounded-xl shadow lg:col-span-2 grid grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-semibold mb-3">Car Types Distribution</h3>
+          <canvas id="typesChart" height="200"></canvas>
+        </div>
+        <div>
+          <h3 class="font-semibold mb-3">Monthly Sales</h3>
+          <canvas id="salesChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="card p-5 rounded-xl shadow mt-8 text-center">
+      <h3 class="text-lg font-semibold mb-3">Quick Actions</h3>
+      <div class="flex justify-center gap-4 flex-wrap">
+        <a href="cars.php" class="px-4 py-2 bg-blue-600 rounded-lg text-white hover:bg-blue-700">Cars</a>
+        <a href="#" onclick="alert('Dealers page coming soon!')" class="px-4 py-2 bg-emerald-600 rounded-lg text-white hover:bg-emerald-700">Dealers</a>
+        <a href="#" onclick="alert('Appointments page coming soon!')" class="px-4 py-2 bg-yellow-500 rounded-lg text-white hover:bg-yellow-600">Appointments</a>
+      </div>
+    </div>
+  </main>
 </template>
 
 <script setup>
@@ -84,139 +133,24 @@ const stats = [
 ];
 </script>
 
-<style scoped>
-.dashboard {
-  padding: 2rem;
-  margin-left: 16rem;
-}
-
-.hero-section {
-  position: relative;
-  border-radius: 24px;
-  overflow: hidden;
-  height: 400px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-  margin-bottom: 2.5rem;
-}
-
-.hero-bg {
-  position: absolute;
-  inset: 0;
-  transition: all 0.7s ease;
-  z-index: 0;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
-  width: 100%;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 2rem;
-}
-
-@media (min-width: 1024px) {
-  .hero-content {
-    flex-direction: row;
-  }
-}
-
-.hero-text {
-  flex: 1;
-  text-align: center;
-}
-
-@media (min-width: 1024px) {
-  .hero-text {
-    text-align: left;
-  }
-}
-
-.hero-text h2 {
-  font-size: 3rem;
-  font-weight: bold;
-  color: white;
-  margin-bottom: 1rem;
-}
-
-.hero-text p {
-  font-size: 1.125rem;
-  color: #e2e8f0;
-  max-width: 28rem;
-  margin: 0 auto;
-}
-
-.hero-buttons {
-  margin-top: 2rem;
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-}
-
-@media (min-width: 1024px) {
-  .hero-buttons {
-    justify-content: flex-start;
-  }
-}
-
-.hero-buttons button {
-  padding: 0.5rem 1.25rem;
-  border: none;
-  border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-
-.hero-buttons button:hover {
-  background-color: rgba(255, 255, 255, 0.3);
-}
-
-.hero-image {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-}
-
-.hero-image img {
-  width: 100%;
-  max-width: 400px;
-  object-fit: contain;
-  border-radius: 16px;
-  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
-}
-
-.stats-grid {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-.stat-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  text-align: center;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-}
-
-.stat-label {
-  color: #94a3b8;
-  font-size: 0.875rem;
-}
-
-.stat-value {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-top: 0.5rem;
-}
+<style>
+body.dark {
+      background-color: #0f172a;
+      color: #e2e8f0;
+    }
+    body.dark .card {
+      background-color: #1e293b;
+    }
+    body.light {
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+    body.light .card {
+      background-color: #e2e8f0;
+    }
+    .card {
+      transition: all 0.3s ease-in-out;
+    }
 </style>
 
 

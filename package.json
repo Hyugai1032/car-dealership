@@ -10,9 +10,12 @@
     "build:frontend": "cd frontend && npm run build",
     "install:all": "npm install --workspaces",
     "start": "concurrently \"npm:dev:frontend\" \"npm:dev:backend\"",
-    "dev:backend": "cd backend && php -S localhost:8000 -t public" 
+    "dev:backend": "cd backend && php -S localhost:8000 -t public"
   },
   "devDependencies": {
     "concurrently": "^8.0.0"
+  },
+  "dependencies": {
+    "vue": "^3.5.22"
   }
 }

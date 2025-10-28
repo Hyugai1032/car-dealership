@@ -21,7 +21,25 @@ class CarController extends Controller {
     public function index()
     {
         $cars = $this->model->get_all_cars();
-        echo json_encode(['status'=>'success','cars'=>$cars]);
+
+        // Convert relative image paths to full URLs
+        foreach ($cars as &$car) {
+            if (!empty($car['main_image'])) {
+                $car['main_image'] = base_url($car['main_image']);
+            }
+
+            // Decode gallery JSON and prepend full URLs
+            if (!empty($car['gallery'])) {
+                $gallery = json_decode($car['gallery'], true);
+                if (is_array($gallery)) {
+                    $car['gallery'] = array_map(function($path) {
+                        return base_url($path);
+                    }, $gallery);
+                }
+            }
+        }
+
+        echo json_encode(['status' => 'success', 'cars' => $cars]);
     }
 
     // GET /api/cars/(:num)
@@ -35,28 +53,25 @@ class CarController extends Controller {
         }
     }
 
-    // POST /api/cars
     public function store()
     {
         $input = json_decode(file_get_contents('php://input'), true);
 
-        // Validate required fields
         if (empty($input['dealer_id']) || empty($input['make']) || empty($input['model'])) {
             echo json_encode(['status'=>'error','message'=>'Dealer, make, and model are required']);
             return;
         }
 
-        // Optional: check if dealer exists
         $dealer = $this->dealersModel->get_dealer_by_id($input['dealer_id']);
         if (!$dealer) {
             echo json_encode(['status'=>'error','message'=>'Selected dealer does not exist']);
             return;
         }
 
-        // Create car
         $this->model->create_car($input);
         echo json_encode(['status'=>'success','message'=>'Car created']);
     }
+
 
     // PUT /api/cars/(:num)
     public function update($id)
@@ -80,7 +95,6 @@ class CarController extends Controller {
         }
     }
 
-    // DELETE /api/cars/(:num)
     public function destroy($id)
     {
         $deleted = $this->model->delete_car($id);
@@ -90,4 +104,6 @@ class CarController extends Controller {
             echo json_encode(['status'=>'error','message'=>'Delete failed']);
         }
     }
+
+
 }

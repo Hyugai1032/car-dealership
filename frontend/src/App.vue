@@ -1,41 +1,61 @@
-<template>
+<template> 
   <div id="app">
-    <component :is="currentPage" 
-               @registered="goToLogin" 
-               @Noaccount="goToRegistration"
-               @logged-in="goToDashboard" />
+    <component
+      :is="currentPage"
+      @registered="goToLogin"
+      @Noaccount="goToRegistration"
+      @logged-in="goToDashboard"
+      @manage-cars="goToCarsManagement"
+    />
   </div>
 </template>
 
 <script>
-import RegistrationComponent from './components/LOGIN/REGISTRATION/Registration.vue';
-import LoginComponent from './components/LOGIN/Login.vue';
-import UserDashboard from './components/Appointments/AppointmentCard.vue';
+import RegistrationComponent from './components/LOGIN/REGISTRATION/Registration.vue'
+import LoginComponent from './components/LOGIN/Login.vue'
+import UserDashboard from './components/Appointments/AppointmentCard.vue'
+import Dashboard from './Dashboard.vue'
+import CarsManagement from './components/Cars/CarsManagement.vue'
 
 export default {
   name: 'App',
   components: {
     RegistrationComponent,
     LoginComponent,
-    UserDashboard
+    UserDashboard,
+    Dashboard,
+    CarsManagement
   },
   data() {
     return {
-      currentPage: LoginComponent // start with login
-    };
+      currentPage: LoginComponent,
+      user: null
+    }
   },
   methods: {
     goToLogin() {
-      this.currentPage = LoginComponent;
+      this.currentPage = RegistrationComponent
     },
     goToRegistration() {
-      this.currentPage = RegistrationComponent;
+      this.currentPage = LoginComponent
     },
-    goToDashboard(user) {
-      this.currentPage = UserDashboard;
-      // optionally pass user data via props or store
-      this.user = user;
+    goToDashboard() {
+      // Skip role verification, go straight to dashboard
+      this.currentPage = Dashboard
+    },
+    goToCarsManagement() {
+      this.currentPage = CarsManagement
     }
+
   }
 }
 </script>
+
+<style>
+body {
+  margin: 0;
+  background-color: #0e0e0e;
+  color: white;
+  font-family: 'Poppins', sans-serif;
+}
+</style>

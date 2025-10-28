@@ -79,7 +79,7 @@
       </form>
 
         <div class="login-redirect">
-          <p>Don't have an account? <a href="#" @click.prevent="$emit('registered')" class="login-link">Sign Up</a></p>
+          <p>Don't have an account? <a href="#" @click.prevent="$router.push('/register')" class="login-link">Sign Up</a></p>
         </div>
 
       <!-- Error Message -->

@@ -126,7 +126,7 @@
         </button>
 
         <div class="login-redirect">
-          <p>Already have an account? <a href="#" @click.prevent="$emit('Noaccount')" class="login-link">Sign In</a></p>
+          <p>Already have an account? <a href="#" @click.prevent="$router.push('/login')" class="login-link">Sign In</a></p>
         </div>
       </form>
 
@@ -260,8 +260,9 @@ export default {
         });
 
         const data = await response.json();
+        console.log(data);
 
-        if (data.success) {
+        if (data.status === 'succcess') {
           this.message = 'Registration successful! Welcome to AutoElite. Redirecting to login...';
           setTimeout(() => this.$router.push('/login'), 2000);
         } else {

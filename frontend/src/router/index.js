@@ -5,8 +5,8 @@ import AdminDashboard from "../components/AdminDashboard.vue";
 
 const routes = [
     { path: "/", component: Login },
-    { path: "/Login", component: Login },
-    { path: "/Register", component: Register },
+    { path: "/login", component: Login },
+    { path: "/register", component: Register },
     { path: "/admin/dashboard", component: AdminDashboard }
 ];
 
@@ -14,3 +14,5 @@ const router = createRouter({
     history: createWebHistory(),
     routes,
 });
+
+export default router

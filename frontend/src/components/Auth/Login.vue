@@ -80,7 +80,8 @@
 
       <!-- Google Sign-In Button -->
       <div class="google-login">
-        <div class="g_id_signin"></div>
+        <div ref="googleBtn"></div>
+        <p v-if="errorMessage" style="color: red">{{ errorMessage }}</p>
       </div>
 
       <!-- Registration Link - IMPROVED -->
@@ -188,53 +189,55 @@ async handleLogin() {
       }
     }
   },mounted() {
-  const initializeGoogle = () => {
-    window.google.accounts.id.initialize({
-      client_id: "1084979266133-d1bvpmpb5devqn5cl0pscuv9k01l9p9t.apps.googleusercontent.com",
-      callback: this.handleGoogleLogin,
-    });
+    const CLIENT_ID = "1084979266133-d1bvpmpb5devqn5cl0pscuv9k01l9p9t.apps.googleusercontent.com";
 
-    window.google.accounts.id.renderButton(
-      document.querySelector(".g_id_signin"),
-      { theme: "outline", size: "large", width: 250 }
-    );
-  };
-
-  // Define callback in case script loads later
-  window.handleGoogleLogin = async (response) => {
-    const token = response.credential;
-    try {
-      const res = await fetch("http://localhost:8000/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: token }),
+    const initializeGoogle = () => {
+      window.google.accounts.id.initialize({
+        client_id: CLIENT_ID,
+        callback: this.handleGoogleLogin,
       });
-      const data = await res.json();
 
-      if (data.success) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-        this.$emit("logged-in", data.user);
-      } else {
-        this.errorMessage = "Google sign-in failed. Please try again.";
-      }
-    } catch (err) {
-      this.errorMessage = "Error verifying Google login.";
-      console.error(err);
+      window.google.accounts.id.renderButton(
+        this.$refs.googleBtn,
+        { theme: "outline", size: "large", width: 250 }
+      );
+    };
+
+    // Ensure script is available
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      initializeGoogle();
+    } else {
+      const interval = setInterval(() => {
+        if (window.google && window.google.accounts && window.google.accounts.id) {
+          clearInterval(interval);
+          initializeGoogle();
+        }
+      }, 300);
     }
-  };
-
-  // Wait for Google script to load
-  if (window.google && window.google.accounts && window.google.accounts.id) {
-    initializeGoogle();
-  } else {
-    const checkGoogleLoaded = setInterval(() => {
-      if (window.google && window.google.accounts && window.google.accounts.id) {
-        clearInterval(checkGoogleLoaded);
-        initializeGoogle();
+  },
+  methods: {
+    async handleGoogleLogin(response) {
+      const token = response.credential;
+      try {
+        const res = await fetch("http://localhost:8000/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ credential: token }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+          this.$emit("logged-in", data.user);
+        } else {
+          this.errorMessage = "Google sign-in failed. Please try again.";
+        }
+      } catch (err) {
+        console.error(err);
+        this.errorMessage = "Error verifying Google login.";
       }
-    }, 500);
+    },
   }
-}
+
 };
 </script>
 

@@ -467,7 +467,7 @@ export default {
       try {
         const payload = { ...form.value }
         payload.gallery = payload.gallery ? JSON.parse(payload.gallery) : []
-        const res = await fetch(`http://localhost:8000/api/cars/${editId.value}`, {
+        const res = await fetch(`http://localhost:8000/cars/${editId.value}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -493,7 +493,7 @@ export default {
       
       loading.value = true
       try {
-        const res = await fetch(`http://localhost:8000/api/cars/${id}`, { method: 'DELETE' })
+        const res = await fetch(`http://localhost:8000/cars/${id}`, { method: 'DELETE' })
         const data = await res.json()
         if (data.status === 'success') {
           fetchCars()

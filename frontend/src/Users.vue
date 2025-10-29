@@ -10,8 +10,8 @@
 </template>
 
 <script>
-import LoginComponent from './components/LOGIN/Login.vue';
-import RegistrationComponent from './components/LOGIN/REGISTRATION/Registration.vue';
+import LoginComponent from './components/Auth/Login.vue';
+import RegistrationComponent from './components/Auth/Registration.vue';
 
 export default {
   name: 'Users',

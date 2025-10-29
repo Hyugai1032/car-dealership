@@ -120,4 +120,8 @@ $router->delete('delete/{id}', 'ApiController::delete');
 $router->get('list', 'ApiController::list');
 $router->get('profile', 'ApiController::profile');
 $router->post('refresh', 'ApiController::refresh');
+$router->post('otp', 'ApiController::SendVerification');
+$router->post('cars/{id}', 'ApiController::updateCars');
+$router->post('/auth/google', 'ApiController::google_login');
+
 

@@ -4,15 +4,15 @@
       :is="currentPage"
       @registered="goToLogin"
       @Noaccount="goToRegistration"
-      @logged-in="goToDashboard"
+      @logged-in="goToCarsManagement"
       @manage-cars="goToCarsManagement"
     />
   </div>
 </template>
 
 <script>
-import RegistrationComponent from './components/LOGIN/REGISTRATION/Registration.vue'
-import LoginComponent from './components/LOGIN/Login.vue'
+import RegistrationComponent from './components/Auth/Registration.vue'
+import LoginComponent from './components/Auth/Login.vue'
 import UserDashboard from './components/Appointments/AppointmentCard.vue'
 import Dashboard from './Dashboard.vue'
 import CarsManagement from './components/Cars/CarsManagement.vue'

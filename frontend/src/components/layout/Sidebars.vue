@@ -5,7 +5,7 @@
         <div class="logo-icon">
           <i class="fas fa-car"></i>
         </div>
-        <span class="logo-text">LuxuryAuto</span>
+        <span class="logo-text">RideZone</span>
       </div>
     </div>
     

@@ -17,7 +17,7 @@
       <div class="login-header">
         <div class="brand-logo">
           <i class="fas fa-crown"></i>
-          <span class="brand-text">AutoElite</span>
+          <span class="brand-text">RideZone</span>
         </div>
         <h1 class="welcome-text">Welcome Back</h1>
         <p class="subtitle">Access your luxury automotive dashboard</p>
@@ -78,9 +78,24 @@
         </button>
       </form>
 
+      <!-- Google Sign-In Button -->
+      <div class="google-login">
+        <div class="g_id_signin"></div>
+      </div>
+
+      <!-- Registration Link - IMPROVED -->
+      <div class="registration-section">
+        <div class="divider">
+          <span class="divider-line"></span>
+          <span class="divider-text">New to RideZone?</span>
+          <span class="divider-line"></span>
+        </div>
+      
+        
         <div class="login-redirect">
           <p>Don't have an account? <a href="#" @click.prevent="$router.push('/register')" class="login-link">Sign Up</a></p>
         </div>
+      </div>
 
       <!-- Error Message -->
       <div class="error-message" v-if="errorMessage" @click="errorMessage = ''">
@@ -134,7 +149,7 @@ export default {
   name: 'LoginComponent',
   data() {
     return {
-      username: '',
+      email: '',
       password: '',
       rememberMe: false,
       errorMessage: '',
@@ -142,30 +157,27 @@ export default {
     };
   },
   methods: {
-    async handleLogin() {
-      this.isLoading = true;
-      this.errorMessage = '';
+async handleLogin() {
+  this.isLoading = true;
+  this.errorMessage = '';
 
-      try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-            const response = await fetch('http://localhost:8000/api/users/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: this.email,
-                password: this.password
-            })
-            });
-        const data = await response.json();
+  try {
+    const response = await fetch('http://localhost:8000/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: this.email,
+        password: this.password
+      })
+    });
+    const data = await response.json();
 
-        if (data.success) {
+        if (data.access_token) {
           localStorage.setItem('user', JSON.stringify(data.user));
           if (this.rememberMe) {
             localStorage.setItem('rememberMe', 'true');
           }
-          this.$router.push('/Appointments/AppointmentCard');
+          this.$emit('logged-in', data.user); // ✅ triggers App.vue to load dashboard
         } else {
           this.errorMessage = data.message || 'Invalid credentials';
         }
@@ -175,13 +187,54 @@ export default {
         this.isLoading = false;
       }
     }
-  },
-  mounted() {
-    // Check if user wanted to be remembered
-    if (localStorage.getItem('rememberMe') === 'true') {
-      this.rememberMe = true;
+  },mounted() {
+  const initializeGoogle = () => {
+    window.google.accounts.id.initialize({
+      client_id: "1084979266133-d1bvpmpb5devqn5cl0pscuv9k01l9p9t.apps.googleusercontent.com",
+      callback: this.handleGoogleLogin,
+    });
+
+    window.google.accounts.id.renderButton(
+      document.querySelector(".g_id_signin"),
+      { theme: "outline", size: "large", width: 250 }
+    );
+  };
+
+  // Define callback in case script loads later
+  window.handleGoogleLogin = async (response) => {
+    const token = response.credential;
+    try {
+      const res = await fetch("http://localhost:8000/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: token }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+        this.$emit("logged-in", data.user);
+      } else {
+        this.errorMessage = "Google sign-in failed. Please try again.";
+      }
+    } catch (err) {
+      this.errorMessage = "Error verifying Google login.";
+      console.error(err);
     }
+  };
+
+  // Wait for Google script to load
+  if (window.google && window.google.accounts && window.google.accounts.id) {
+    initializeGoogle();
+  } else {
+    const checkGoogleLoaded = setInterval(() => {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        clearInterval(checkGoogleLoaded);
+        initializeGoogle();
+      }
+    }, 500);
   }
+}
 };
 </script>
 
@@ -331,6 +384,67 @@ export default {
   font-weight: 300;
 }
 
+/* ADDED: Registration Section Styles */
+.registration-section {
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* .divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.divider-text {
+  padding: 0 15px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  font-weight: 300;
+} */
+
+.login-redirect {
+  text-align: center;
+  margin-top: 2px;
+}
+
+.login-redirect p {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.95rem;
+}
+
+.login-link {
+  color: #e53935;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.login-link:hover {
+  color: #ff6b6b;
+  border-bottom-color: #ff6b6b;
+}
+
+/* ADDED: Password Toggle Styles */
+.password-toggle {
+  cursor: pointer;
+  right: 20px !important;
+  left: auto !important;
+  transition: color 0.3s ease;
+}
+
+.password-toggle:hover {
+  color: #e53935;
+}
+
 /* Form Styles */
 .login-form {
   display: flex;
@@ -466,7 +580,7 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
   overflow: hidden;
-  margin-top: 10px;
+  margin-top: 5px;
 }
 
 .login-button::before {
@@ -514,6 +628,13 @@ export default {
   transform: translate(-50%, -50%);
 }
 
+.google-login {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+
 .loader-spinner {
   width: 20px;
   height: 20px;
@@ -550,7 +671,7 @@ export default {
 
 /* Footer */
 .login-footer {
-  margin-top: 40px;
+  margin-top: 5px;
   text-align: center;
 }
 

@@ -112,5 +112,16 @@ $router->put('/api/inquiries/(:num)', 'InquiriesController::update/$1'); // Upda
 $router->delete('/api/inquiries/(:num)', 'InquiriesController::destroy/$1'); // Delete an inquiry (admin action).
 //--- End of routes ---
 
+$router->post('login', 'ApiController::login');
+$router->post('logout', 'ApiController::logout');
+$router->post('create', 'ApiController::create');
+$router->put('update/{id}', 'ApiController::update');
+$router->delete('delete/{id}', 'ApiController::delete');
+$router->get('list', 'ApiController::list');
+$router->get('profile', 'ApiController::profile');
+$router->post('refresh', 'ApiController::refresh');
+$router->post('otp', 'ApiController::SendVerification');
+$router->post('cars/{id}', 'ApiController::updateCars');
+$router->post('/auth/google', 'ApiController::google_login');
 
 

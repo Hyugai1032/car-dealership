@@ -19,7 +19,7 @@
           <div class="brand-logo">
             <i class="fas fa-crown"></i>
           </div>
-          <h1 class="brand-title">AutoElite</h1>
+          <h1 class="brand-title">RideZone</h1>
           <p class="brand-tagline">Premium Automotive Management</p>
         </div>
         
@@ -117,7 +117,7 @@
           <span class="button-content">
             <i class="fas fa-user-plus"></i>
             <span class="button-text">
-              {{ isLoading ? 'Creating Account...' : 'Create Elite Account' }}
+              {{ isLoading ? 'Creating Account...' : 'Create RideZone Account' }}
             </span>
           </span>
           <div class="button-loader" v-if="isLoading">
@@ -129,6 +129,27 @@
           <p>Already have an account? <a href="#" @click.prevent="$router.push('/login')" class="login-link">Sign In</a></p>
         </div>
       </form>
+
+            <!-- Google Sign-In Button -->
+      <div class="google-login">
+        <div 
+          id="g_id_onload"
+          data-client_id="1084979266133-d1bvpmpb5devqn5cl0pscuv9k01l9p9t.apps.googleusercontent.com"
+          data-context="signin"
+          data-callback="handleGoogleLogin"
+          data-auto_prompt="false">
+        </div>
+
+        <div 
+          class="g_id_signin" 
+          data-type="standard"
+          data-size="large"
+          data-theme="outline"
+          data-text="signin_with"
+          data-shape="rectangular"
+          data-logo_alignment="left">
+        </div>
+      </div>
 
       <!-- Success/Error Message -->
       <div class="message-container" v-if="message">
@@ -146,7 +167,7 @@
     <div class="features-panel">
       <div class="panel-content">
         <div class="panel-header">
-          <h3>Why Join AutoElite?</h3>
+          <h3>Why Join RideZone?</h3>
           <p>Experience the future of automotive management</p>
         </div>
         
@@ -187,7 +208,7 @@
         <div class="testimonial">
           <div class="testimonial-content">
             <i class="fas fa-quote-left quote-icon"></i>
-            <p>"AutoElite transformed our dealership operations. The platform is as premium as the cars we sell."</p>
+            <p>"RideZone transformed our dealership operations. The platform is as premium as the cars we sell."</p>
             <div class="testimonial-author">
               <strong>Sarah Chen</strong>
               <span>CEO, Prestige Motors</span>
@@ -263,7 +284,7 @@ export default {
         console.log(data);
 
         if (data.status === 'succcess') {
-          this.message = 'Registration successful! Welcome to AutoElite. Redirecting to login...';
+          this.message = 'Registration successful! Welcome to RideZone. Redirecting to login...';
           setTimeout(() => this.$router.push('/login'), 2000);
         } else {
           this.message = data.message || 'Registration failed. Please try again.';

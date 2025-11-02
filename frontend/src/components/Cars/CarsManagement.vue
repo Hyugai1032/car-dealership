@@ -1,61 +1,54 @@
 <template>
   <div class="dashboard" :class="theme">
-    <!-- Side Navigation -->
-    <Sidebar :theme="theme" @toggle-theme="toggleTheme" />
-
-    <!-- Main Content Area -->
-    <div class="main-content">
-      <!-- Top Navigation -->
-      <Header :theme="theme" />
-
-      <!-- Dashboard Content -->
-      <div class="dashboard-content">
-        <!-- Hero / Stats Section -->
-        <div class="dashboard-grid">
-
-          <!-- Enhanced Cars Management Panel -->
-          <div class="cars-management-panel">
-            <!-- Panel Header -->
-            <div class="panel-header">
-              <div class="header-content">
-                <div class="title-section">
-                  <div class="title-icon">
-                    <i class="fas fa-car"></i>
-                  </div>
-                  <div class="title-text">
-                    <h2 class="main-title">Vehicle Inventory Management</h2>
-                    <p class="subtitle">Manage your premium automotive collection with precision</p>
-                  </div>
-                </div>
-                <div class="header-stats">
-                  <div class="stat-card">
-                    <div class="stat-icon">
-                      <i class="fas fa-car-side"></i>
-                    </div>
-                    <div class="stat-info">
-                      <span class="stat-value">{{ cars.length }}</span>
-                      <span class="stat-label">Total Vehicles</span>
-                    </div>
-                  </div>
-                </div>
+    <!-- Background Effects -->
+    <div class="background-glow"></div>
+    
+    <!-- Dashboard Content -->
+    <div class="dashboard-content">
+      <!-- Panel Header -->
+      <div class="panel-header">
+        <div class="header-content">
+          <div class="title-section">
+            <div class="title-icon">
+              <i class="fas fa-car-side"></i>
+            </div>
+            <div class="title-text">
+              <h1 class="main-title">Cars Management</h1>
+              <p class="subtitle">Manage your vehicle inventory efficiently</p>
+            </div>
+          </div>
+          <div class="header-stats">
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-car"></i>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value">{{ cars.length }}</div>
+                <div class="stat-label">Total Vehicles</div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <!-- Enhanced Form Section -->
-            <div class="form-section">
-              <div class="form-container">
-                <div class="form-header">
-                  <h3 class="form-title">
-                    <i :class="isEditing ? 'fas fa-edit' : 'fas fa-plus'"></i>
-                    {{ isEditing ? 'Update Vehicle Details' : 'Add New Vehicle' }}
-                  </h3>
-                  <div class="form-badge" :class="isEditing ? 'editing' : 'creating'">
-                    {{ isEditing ? 'EDITING' : 'CREATING' }}
-                  </div>
+      <div class="dashboard-grid">
+        <!-- Cars Management Panel -->
+        <div class="cars-management-panel">
+          <!-- Form Section -->
+          <div class="form-section">
+            <div class="form-container">
+              <div class="form-header">
+                <h3 class="form-title">
+                  <i :class="isEditing ? 'fas fa-edit' : 'fas fa-plus'"></i>
+                  {{ isEditing ? 'Update Vehicle Details' : 'Add New Vehicle' }}
+                </h3>
+                <div class="form-badge" :class="isEditing ? 'editing' : 'creating'">
+                  {{ isEditing ? 'EDITING' : 'CREATING' }}
                 </div>
+              </div>
 
-                <form @submit.prevent="isEditing ? updateCar() : createCar()" class="car-form">
-                  <div class="form-grid">
+              <form @submit.prevent="isEditing ? updateCar() : createCar()" class="car-form">
+                <div class="form-grid">
                     <!-- Basic Information -->
                     <div class="form-group">
                       <label class="form-label">
@@ -141,6 +134,74 @@
                       <div class="form-focus-line"></div>
                     </div>
 
+                    <!-- Pricing and Specs -->
+                    <div class="form-group">
+                      <label class="form-label">
+                        <i class="fas fa-dollar-sign"></i>
+                        Price
+                      </label>
+                      <input
+                        v-model="form.price"
+                        type="number"
+                        class="form-input"
+                        placeholder="Enter vehicle price"
+                      />
+                      <div class="form-focus-line"></div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Mileage
+                      </label>
+                      <input
+                        v-model="form.mileage"
+                        type="number"
+                        class="form-input"
+                        placeholder="Enter mileage (km)"
+                      />
+                      <div class="form-focus-line"></div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">
+                        <i class="fas fa-gas-pump"></i>
+                        Fuel Type
+                      </label>
+                      <input
+                        v-model="form.fuel_type"
+                        class="form-input"
+                        placeholder="Enter fuel type (Petrol, Diesel, etc.)"
+                      />
+                      <div class="form-focus-line"></div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">
+                        <i class="fas fa-cog"></i>
+                        Transmission
+                      </label>
+                      <input
+                        v-model="form.transmission"
+                        class="form-input"
+                        placeholder="Enter transmission type"
+                      />
+                      <div class="form-focus-line"></div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">
+                        <i class="fas fa-palette"></i>
+                        Color
+                      </label>
+                      <input
+                        v-model="form.color"
+                        class="form-input"
+                        placeholder="Enter vehicle color"
+                      />
+                      <div class="form-focus-line"></div>
+                    </div>
+
                     <!-- Media Section -->
                     <div class="form-group full-width">
                       <label class="form-label">
@@ -158,21 +219,47 @@
                       </div>
                     </div>
 
+                    <!-- Description -->
                     <div class="form-group full-width">
                       <label class="form-label">
-                        <i class="fas fa-images"></i>
-                        Gallery Images
+                        <i class="fas fa-align-left"></i>
+                        Description
                       </label>
                       <textarea
-                        v-model="form.gallery"
+                        v-model="form.description"
                         class="form-textarea"
-                        placeholder='JSON array format: ["cars/image1.jpg", "cars/image2.jpg"]'
-                        rows="3"
+                        placeholder="Enter vehicle description"
                       ></textarea>
                       <div class="form-focus-line"></div>
-                      <div class="form-hint">
-                        Enter image paths as a JSON array for the gallery
-                      </div>
+                    </div>
+
+                    <!-- Warranty and Status -->
+                    <div class="form-group">
+                      <label class="form-label">
+                        <i class="fas fa-shield-alt"></i>
+                        Warranty ID
+                      </label>
+                      <input
+                        v-model="form.warranty_id"
+                        type="number"
+                        class="form-input"
+                        placeholder="Enter warranty ID (if any)"
+                      />
+                      <div class="form-focus-line"></div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="form-label">
+                        <i class="fas fa-info-circle"></i>
+                        Status
+                      </label>
+                      <select v-model="form.status" class="form-input">
+                        <option class="color:black" value="available">Available</option>
+                        <option value="reserved">Reserved</option>
+                        <option value="sold">Sold</option>
+                        <option value="draft">Draft</option>
+                      </select>
+                      <div class="form-focus-line"></div>
                     </div>
                   </div>
 
@@ -199,143 +286,136 @@
                       </div>
                     </button>
                   </div>
-                </form>
-              </div>
+              </form>
             </div>
+          </div>
 
-            <!-- Enhanced Cars Table -->
-            <div class="table-section">
-              <div class="table-container">
-                <div class="table-header">
-                  <h3 class="table-title">
-                    <i class="fas fa-list"></i>
-                    Vehicle Inventory
-                  </h3>
-                  <div class="table-actions">
-                    <button @click="fetchCars" class="refresh-btn">
-                      <i class="fas fa-sync-alt"></i>
-                      Refresh
-                    </button>
+          <!-- Vehicles Table -->
+          <div class="table-section">
+            <div class="table-container">
+              <div class="table-header">
+                <h3 class="table-title">
+                  <i class="fas fa-list"></i>
+                  Vehicle Inventory
+                </h3>
+                <div class="table-actions">
+                  <button @click="fetchCars" class="refresh-btn">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              <div class="table-content">
+                <div v-if="cars.length === 0" class="empty-state">
+                  <div class="empty-icon">
+                    <i class="fas fa-car-crash"></i>
                   </div>
+                  <h3>No Vehicles Found</h3>
+                  <p>Start by adding your first vehicle to the inventory</p>
                 </div>
 
-                <div class="table-content">
-                  <div v-if="cars.length === 0" class="empty-state">
-                    <div class="empty-icon">
-                      <i class="fas fa-car-crash"></i>
-                    </div>
-                    <h3>No Vehicles Found</h3>
-                    <p>Start by adding your first vehicle to the inventory</p>
-                  </div>
-
-                  <div v-else class="enhanced-table">
-                    <div class="table-responsive">
-                      <table class="vehicles-table">
-                        <thead>
-                          <tr>
-                            <th class="table-header-cell">
-                              <div class="header-content">
-                                <i class="fas fa-hashtag"></i>
-                                ID
-                              </div>
-                            </th>
-                            <th class="table-header-cell">
-                              <div class="header-content">
-                                <i class="fas fa-store"></i>
-                                Dealer
-                              </div>
-                            </th>
-                            <th class="table-header-cell">
-                              <div class="header-content">
-                                <i class="fas fa-tag"></i>
-                                Make
-                              </div>
-                            </th>
-                            <th class="table-header-cell">
-                              <div class="header-content">
-                                <i class="fas fa-car"></i>
-                                Model
-                              </div>
-                            </th>
-                            <th class="table-header-cell">
-                              <div class="header-content">
-                                <i class="fas fa-calendar"></i>
-                                Year
-                              </div>
-                            </th>
-                            <th class="table-header-cell">
-                              <div class="header-content">
-                                <i class="fas fa-cogs"></i>
-                                Variant
-                              </div>
-                            </th>
-                            <th class="table-header-cell">
-                              <div class="header-content">
-                                <i class="fas fa-wrench"></i>
-                                Actions
-                              </div>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr
-                            v-for="car in cars"
-                            :key="car.id"
-                            class="table-row"
-                            :class="{ 'editing-row': isEditing && editId === car.id }"
-                          >
-                            <td class="table-cell id-cell">
-                              <span class="cell-badge">#{{ car.id }}</span>
-                            </td>
-                            <td class="table-cell">
-                              <div class="dealer-info">
-                                <i class="fas fa-store"></i>
-                                <span>{{ car.dealer_id }}</span>
-                              </div>
-                            </td>
-                            <td class="table-cell">
-                              <span class="make-text">{{ car.make }}</span>
-                            </td>
-                            <td class="table-cell">
-                              <strong class="model-text">{{ car.model }}</strong>
-                            </td>
-                            <td class="table-cell">
-                              <span class="year-badge">{{ car.year }}</span>
-                            </td>
-                            <td class="table-cell">
-                              <span class="variant-tag" v-if="car.variant">
-                                {{ car.variant }}
-                              </span>
-                              <span class="variant-empty" v-else>
-                                -
-                              </span>
-                            </td>
-                            <td class="table-cell actions-cell">
-                              <div class="action-buttons">
-                                <button
-                                  @click="editCar(car)"
-                                  class="action-btn edit-btn"
-                                  :disabled="isEditing && editId !== car.id"
-                                >
-                                  <i class="fas fa-edit"></i>
-                                  <span>Edit</span>
-                                  <div class="btn-glow"></div>
-                                </button>
-                                <button
-                                  @click="deleteCar(car.id)"
-                                  class="action-btn delete-btn"
-                                  :disabled="isEditing"
-                                >
-                                  <i class="fas fa-trash"></i>
-                                  <span>Delete</span>
-                                  <div class="btn-glow"></div>
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
+                <div v-else class="enhanced-table">
+                  <div class="table-responsive">
+                    <table class="vehicles-table">
+                      <thead>
+                        <tr>
+                          <th class="table-header-cell">
+                            <div class="header-content">
+                              <i class="fas fa-hashtag"></i>
+                              ID
+                            </div>
+                          </th>
+                          <th class="table-header-cell">
+                            <div class="header-content">
+                              <i class="fas fa-store"></i>
+                              Dealer
+                            </div>
+                          </th>
+                          <th class="table-header-cell">
+                            <div class="header-content">
+                              <i class="fas fa-tag"></i>
+                              Make
+                            </div>
+                          </th>
+                          <th class="table-header-cell">
+                            <div class="header-content">
+                              <i class="fas fa-car"></i>
+                              Model
+                            </div>
+                          </th>
+                          <th class="table-header-cell">
+                            <div class="header-content">
+                              <i class="fas fa-calendar"></i>
+                              Year
+                            </div>
+                          </th>
+                          <th class="table-header-cell">
+                            <div class="header-content">
+                              <i class="fas fa-cogs"></i>
+                              Variant
+                            </div>
+                          </th>
+                          <th class="table-header-cell">
+                            <div class="header-content">
+                              <i class="fas fa-actions"></i>
+                              Actions
+                            </div>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          v-for="car in cars"
+                          :key="car.id"
+                          class="table-row"
+                          :class="{ 'editing-row': isEditing && editId === car.id }"
+                        >
+                          <td class="table-cell id-cell">#{{ car.id }}</td>
+                          <td class="table-cell">
+                            <div class="dealer-info">
+                              <i class="fas fa-store"></i>
+                              <span>{{ car.dealer_id }}</span>
+                            </div>
+                          </td>
+                          <td class="table-cell">
+                            <span class="make-text">{{ car.make }}</span>
+                          </td>
+                          <td class="table-cell">
+                            <span class="model-text">{{ car.model }}</span>
+                          </td>
+                          <td class="table-cell">
+                            <span class="year-badge">{{ car.year }}</span>
+                          </td>
+                          <td class="table-cell">
+                            <span v-if="car.variant" class="variant-tag">{{ car.variant }}</span>
+                            <span v-else class="variant-empty">-</span>
+                          </td>
+                          <td class="table-cell actions-cell">
+                            <div class="action-buttons">
+                              <button 
+                                @click="editCar(car)" 
+                                class="action-btn edit-btn"
+                                :disabled="isEditing && editId !== car.id"
+                              >
+                                <i class="fas fa-edit"></i>
+                                Edit
+                                <div class="btn-glow"></div>
+                              </button>
+                              <button 
+                                @click="deleteCar(car.id)" 
+                                class="action-btn delete-btn"
+                                :disabled="isEditing"
+                              >
+                                <i class="fas fa-trash"></i>
+                                Delete
+                                <div class="btn-glow"></div>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
@@ -344,9 +424,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Background Glow Effects -->
-    <div class="background-glow"></div>
 
     <!-- Loading Overlay -->
     <div v-if="loading" class="loading-overlay">
@@ -363,29 +440,12 @@
 
 <script>
 import { ref, onMounted } from 'vue'
-import Sidebar from '../layout/Sidebars.vue'
-import Header from '../layout/Header.vue'
-import StatsGrid from '../dashboard/StatsGrid.vue'
 
 export default {
   name: 'CarsManagement',
-  components: { Sidebar, Header, StatsGrid },
   setup() {
     const theme = ref(localStorage.getItem('dashboard-theme') || 'dark')
     const loading = ref(false)
-
-    const toggleTheme = () => {
-      theme.value = theme.value === 'dark' ? 'light' : 'dark'
-      localStorage.setItem('dashboard-theme', theme.value)
-    }
-
-    const stats = ref({
-      totalCars: '--',
-      totalDealers: '--',
-      pendingAppointments: '--',
-      totalUsers: '--',
-      revenue: '--'
-    })
 
     const cars = ref([])
     const form = ref({
@@ -395,22 +455,24 @@ export default {
       variant: '',
       year: '',
       type: '',
-      main_image: '',
-      gallery: ''
+      main_image: ''
     })
     const isEditing = ref(false)
     const editId = ref(null)
 
-    const fetchCars = async () => {
+    const fetchCars = async () => { 
       loading.value = true
       try {
-        const res = await fetch('http://localhost:8000/api/cars')
+        const res = await fetch('http://localhost:8000/listcars')
         const data = await res.json()
-        if (data.status === 'success') cars.value = data.cars
-        // Update stats
-        stats.value.totalCars = cars.value.length
+
+        if (data.status === 'success' && Array.isArray(data.cars)) {
+          cars.value = data.cars
+        } else {
+          console.error('Error: Invalid response format', data)
+        }
       } catch (err) { 
-        console.error(err) 
+        console.error('Network or parsing error:', err)
       } finally {
         loading.value = false
       }
@@ -419,12 +481,10 @@ export default {
     const createCar = async () => {
       loading.value = true
       try {
-        const payload = { ...form.value }
-        payload.gallery = payload.gallery ? JSON.parse(payload.gallery) : []
-        const res = await fetch('http://localhost:8000/api/cars', {
+        const res = await fetch('http://localhost:8000/createcars', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ ...form.value })
         })
         const data = await res.json()
         if (data.status === 'success') {
@@ -445,15 +505,8 @@ export default {
     const editCar = (car) => {
       isEditing.value = true
       editId.value = car.id
-      form.value = { 
-        ...car, 
-        gallery: car.gallery ? JSON.stringify(car.gallery) : '[]'
-      }
-      // Scroll to form
-      document.querySelector('.form-section').scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-      })
+      form.value = { ...car }
+      document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
 
     const cancelEdit = () => {
@@ -465,22 +518,21 @@ export default {
     const updateCar = async () => {
       loading.value = true
       try {
-        const payload = { ...form.value }
-        payload.gallery = payload.gallery ? JSON.parse(payload.gallery) : []
-        const res = await fetch(`http://localhost:8000/cars/${editId.value}`, {
+        const res = await fetch(`http://localhost:8000/updatecars/${editId.value}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ ...form.value })
         })
         const data = await res.json()
         if (data.status === 'success') {
-          fetchCars()
+          await fetchCars()
           cancelEdit()
+          resetForm()
           showNotification('Vehicle updated successfully!', 'success')
         } else {
           showNotification(data.message || 'Error updating vehicle', 'error')
         }
-      } catch (err) { 
+      } catch (err) {
         console.error(err)
         showNotification('Network error occurred', 'error')
       } finally {
@@ -489,19 +541,18 @@ export default {
     }
 
     const deleteCar = async (id) => {
-      if (!confirm('Are you sure you want to delete this vehicle? This action cannot be undone.')) return
-      
+      if (!confirm('Are you sure you want to delete this vehicle?')) return
       loading.value = true
       try {
-        const res = await fetch(`http://localhost:8000/cars/${id}`, { method: 'DELETE' })
+        const res = await fetch(`http://localhost:8000/deletecars/${id}`, { method: 'DELETE' })
         const data = await res.json()
         if (data.status === 'success') {
-          fetchCars()
+          await fetchCars()
           showNotification('Vehicle deleted successfully!', 'success')
         } else {
           showNotification(data.message || 'Error deleting vehicle', 'error')
         }
-      } catch (err) { 
+      } catch (err) {
         console.error(err)
         showNotification('Network error occurred', 'error')
       } finally {
@@ -517,13 +568,11 @@ export default {
         variant: '',
         year: '',
         type: '',
-        main_image: '',
-        gallery: ''
+        main_image: ''
       }
     }
 
     const showNotification = (message, type) => {
-      // You can integrate with your notification system here
       console.log(`${type.toUpperCase()}: ${message}`)
     }
 
@@ -534,12 +583,11 @@ export default {
     return {
       theme,
       loading,
-      toggleTheme,
-      stats,
       cars,
       form,
       isEditing,
       editId,
+      fetchCars,
       createCar,
       editCar,
       cancelEdit,
@@ -573,13 +621,6 @@ export default {
   z-index: -1;
 }
 
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  margin-left: 280px;
-}
-
 .dashboard-content {
   flex: 1;
   padding: 30px;
@@ -595,18 +636,6 @@ export default {
   display: grid;
   grid-template-columns: 1fr;
   gap: 30px;
-}
-
-/* Cars Management Panel */
-.cars-management-panel {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 25px;
-  backdrop-filter: blur(20px);
-  overflow: hidden;
-  box-shadow: 
-    0 20px 60px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Panel Header */
@@ -710,6 +739,18 @@ export default {
   color: rgba(255, 255, 255, 0.7);
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+/* Cars Management Panel */
+.cars-management-panel {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 25px;
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Form Section */
@@ -856,6 +897,11 @@ export default {
   justify-content: flex-end;
   align-items: center;
   flex-wrap: wrap;
+}
+/* optional: force text color for options */
+.form-input option {
+  color: black; /* or white depending on background */
+  background: white; /* light background for visibility */
 }
 
 .cancel-btn {
@@ -1067,15 +1113,6 @@ export default {
   font-weight: 600;
 }
 
-.cell-badge {
-  background: rgba(212, 0, 0, 0.1);
-  color: #d40000;
-  padding: 6px 12px;
-  border-radius: 15px;
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
 .dealer-info {
   display: flex;
   align-items: center;
@@ -1239,10 +1276,6 @@ export default {
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-  .main-content {
-    margin-left: 0;
-  }
-  
   .header-content {
     flex-direction: column;
     align-items: flex-start;

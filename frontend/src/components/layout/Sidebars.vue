@@ -5,7 +5,7 @@
         <div class="logo-icon">
           <i class="fas fa-car"></i>
         </div>
-        <span class="logo-text">RideZone</span>
+        <span class="logo-text">LuxuryAuto</span>
       </div>
     </div>
     
@@ -13,51 +13,102 @@
       <div class="nav-section">
         <h3 class="nav-section-title">MAIN</h3>
         <ul class="nav-links">
-          <li class="nav-item active">
+          <li 
+            class="nav-item" 
+            :class="{ active: $route.name === 'dashboard' }"
+            @click="navigate('dashboard')"
+          >
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
-            <div class="active-indicator"></div>
+            <div v-if="$route.name === 'dashboard'" class="active-indicator"></div>
           </li>
-          <li class="nav-item">
+
+          <li 
+            class="nav-item" 
+            :class="{ active: $route.name === 'analytics' }"
+            @click="navigate('analytics')"
+          >
             <i class="fas fa-chart-line"></i>
             <span>Analytics</span>
+            <div v-if="$route.name === 'analytics'" class="active-indicator"></div>
           </li>
-          <li class="nav-item">
+
+          <li 
+            class="nav-item"
+            :class="{ active: $route.name === 'cars-inventory' }"
+            @click="navigate('cars-inventory')"
+          >
             <i class="fas fa-car"></i>
             <span>Vehicle Inventory</span>
+            <div v-if="$route.name === 'cars-inventory'" class="active-indicator"></div>
           </li>
-          <li class="nav-item">
+
+          <li 
+            class="nav-item"
+            :class="{ active: $route.name === 'dealers' }"
+            @click="navigate('dealers')"
+          >
             <i class="fas fa-store"></i>
             <span>Dealers</span>
+            <div v-if="$route.name === 'dealers'" class="active-indicator"></div>
           </li>
         </ul>
       </div>
       
       <div class="nav-section">
         <h3 class="nav-section-title">MANAGEMENT</h3>
-          <ul class="nav-links">
-            <li class="nav-item">
-              <i class="fas fa-calendar-check"></i>
-              <span>Appointments</span>
-              <span class="badge">23</span>
-            </li>
-            <li class="nav-item">
-              <i class="fas fa-car-side"></i>
-              <span>Cars Management</span>
-            </li>
-            <li class="nav-item">
-              <i class="fas fa-users"></i>
-              <span>Customers</span>
-            </li>
-            <li class="nav-item">
-              <i class="fas fa-file-invoice-dollar"></i>
-              <span>Financing</span>
-            </li>
-            <li class="nav-item">
-              <i class="fas fa-cogs"></i>
-              <span>Settings</span>
-            </li>
-          </ul>
+        <ul class="nav-links">
+          <li 
+            class="nav-item"
+            :class="{ active: $route.name === 'appointment' }"
+            @click="navigate('appointment')"
+          >
+            <i class="fas fa-calendar-check"></i>
+            <span>Appointments</span>
+            <span class="badge">23</span>
+            <div v-if="$route.name === 'appointment'" class="active-indicator"></div>
+          </li>
+
+          <li 
+            class="nav-item" 
+            :class="{ active: $route.name === 'cars-management' }"
+            @click="navigate('cars-management')"
+          >
+            <i class="fas fa-car-side"></i>
+            <span>Cars Management</span>
+            <div v-if="$route.name === 'cars-management'" class="active-indicator"></div>
+          </li>
+
+          <li 
+            class="nav-item"
+            :class="{ active: $route.name === 'customers' }"
+            @click="navigate('customers')"
+          >
+            <i class="fas fa-users"></i>
+            <span>Customers</span>
+            <div v-if="$route.name === 'customers'" class="active-indicator"></div>
+          </li>
+
+          <li 
+            class="nav-item"
+            :class="{ active: $route.name === 'financing' }"
+            @click="navigate('financing')"
+          >
+            <i class="fas fa-file-invoice-dollar"></i>
+            <span>Financing</span>
+            <div v-if="$route.name === 'financing'" class="active-indicator"></div>
+          </li>
+
+          <li 
+            class="nav-item"
+            :class="{ active: $route.name === 'settings' }"
+            @click="navigate('settings')"
+          >
+            <i class="fas fa-cogs"></i>
+            <span>Settings</span>
+            <div v-if="$route.name === 'settings'" class="active-indicator"></div>
+          </li>
+        </ul>
       </div>
     </nav>
     
@@ -71,9 +122,14 @@
           <span class="user-role">Administrator</span>
         </div>
       </div>
-      <button @click="$emit('toggle-theme')" class="theme-toggle">
-        <i class="fas fa-palette"></i>
-      </button>
+      <div class="footer-actions">
+        <button @click="$emit('toggle-theme')" class="theme-toggle" title="Toggle Theme">
+          <i class="fas fa-sun"></i>
+        </button>
+        <button @click="logout" class="logout-btn" title="Logout">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
     </div>
   </aside>
 </template>
@@ -82,12 +138,19 @@
 export default {
   name: 'Sidebar',
   props: {
-    theme: {
-      type: String,
-      default: 'dark'
-    }
+    theme: { type: String, default: 'dark' }
   },
-  emits: ['toggle-theme']
+  emits: ['toggle-theme'],
+  methods: {
+    navigate(routeName) {
+      this.$router.push({ name: routeName })
+    },
+    logout() {
+      // Example: clear auth and redirect
+      localStorage.removeItem('user')
+      this.$router.push({ name: 'login' })
+    }
+  }
 }
 </script>
 
@@ -104,12 +167,6 @@ export default {
   flex-direction: column;
   z-index: 1000;
   transition: all 0.3s ease;
-  overflow: auto;
-  scrollbar-width: none;
-}
-
-.sidebar::-webkit-scrollbar{
-  display: none;
 }
 
 .sidebar-header {
@@ -215,16 +272,19 @@ export default {
 }
 
 .active-indicator {
-  width: 6px;
-  height: 6px;
-  background: var(--text-accent);
+  position: absolute;
+  right: 15px;
+  width: 8px;
+  height: 8px;
+  background: #d40000;
   border-radius: 50%;
-  animation: pulse 2s infinite;
+  box-shadow: 0 0 8px rgba(212, 0, 0, 0.8);
+  animation: pulse 1.5s infinite;
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
 }
 
 .sidebar-footer {
@@ -269,7 +329,13 @@ export default {
   color: var(--text-secondary);
 }
 
-.theme-toggle {
+.footer-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.theme-toggle,
+.logout-btn {
   width: 40px;
   height: 40px;
   border: none;
@@ -283,13 +349,17 @@ export default {
   justify-content: center;
 }
 
-.theme-toggle:hover {
+.theme-toggle:hover,
+.logout-btn:hover {
   color: var(--text-accent);
   background: var(--bg-secondary);
-  transform: rotate(15deg);
+  transform: scale(1.05);
 }
 
-/* Responsive Design */
+.logout-btn i {
+  font-size: 1rem;
+}
+
 @media (max-width: 1200px) {
   .sidebar {
     transform: translateX(-100%);

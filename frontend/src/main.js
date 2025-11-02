@@ -1,6 +1,9 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-//import Users from './Users.vue'
+import router from './router'
+import '@fortawesome/fontawesome-free/css/all.css'
+
+
 
 // Global CSS
 const styles = `
@@ -42,4 +45,4 @@ styleSheet.textContent = styles
 document.head.appendChild(styleSheet)
 
 // Create and mount the app
-createApp(App).mount('#app')
+createApp(App).use(router).mount('#app')

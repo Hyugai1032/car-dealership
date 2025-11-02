@@ -87,13 +87,12 @@
       <div class="registration-section">
         <div class="divider">
           <span class="divider-line"></span>
-          <span class="divider-text">New to AutoElite?</span>
           <span class="divider-line"></span>
         </div>
       
         
         <div class="login-redirect">
-          <p>Don't have an account? <a href="#" @click.prevent="$emit('registered')" class="login-link">Sign Up</a></p>
+          <p>Don't have an account? <a href="#" @click.prevent="$emit('no-account')" class="login-link">Sign Up</a></p>
         </div>
       </div>
 
@@ -177,7 +176,7 @@ async handleLogin() {
           if (this.rememberMe) {
             localStorage.setItem('rememberMe', 'true');
           }
-          this.$emit('logged-in', data.user); // ✅ triggers App.vue to load dashboard
+          this.$emit('manage-cars', data.user); // ✅ triggers App.vue to load dashboard
         } else {
           this.errorMessage = data.message || 'Invalid credentials';
         }
@@ -823,5 +822,20 @@ async handleLogin() {
   .welcome-text {
     font-size: 1.8rem;
   }
+  /* Hide scrollbar for Chrome, Safari, and Edge */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide scrollbar for Firefox */
+  html {
+    scrollbar-width: none;
+  }
+
+  /* Prevent overflow scrolling */
+  body, html {
+    overflow: auto;
+  }
+
 }
 </style>

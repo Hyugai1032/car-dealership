@@ -1,5 +1,11 @@
 {
+    "name": "johnrheytamares/lava-lust-dev-v4",
+    "autoload": {
+        "psr-4": {
+            "Johnrheytamares\\LavaLustDevV4\\": "src/"
+        }
+    },
     "require": {
-        "google/apiclient": "2.0"
+        "phpmailer/phpmailer": "^7.0"
     }
 }

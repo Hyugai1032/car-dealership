@@ -11,6 +11,8 @@ frontend/
 |   |   |
 │   │   ├── Appointments/
 │   │   │   ├──AppointmentCard.vue
+│   │   │   ├──AppointmentModal.vue
+│   │   │   ├──AppointmentList.vue
 │   │   │   ├──BookingModal.vue
 │   │   │   ├──NavigationBar.vue
 │   │   │   ├──NotificationBar.vue

@@ -344,48 +344,87 @@ class ApiController extends Controller {
 
     public function listCarsPaginated() {
     try {
-        $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-        $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
-        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 10;
         $offset = ($page - 1) * $limit;
 
-        // Base query
-        $baseSql = "FROM cars";
+        // Input filters
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+        $make = isset($_GET['make']) ? trim($_GET['make']) : '';
+        $year = isset($_GET['year']) ? trim($_GET['year']) : '';
+        $minPrice = isset($_GET['minPrice']) && $_GET['minPrice'] !== '' ? (int)$_GET['minPrice'] : null;
+        $maxPrice = isset($_GET['maxPrice']) && $_GET['maxPrice'] !== '' ? (int)$_GET['maxPrice'] : null;
+        $transmission = isset($_GET['transmission']) ? trim($_GET['transmission']) : '';
+        // fuelTypes can be sent as comma-separated e.g. "Gasoline,Electric"
+        $fuelTypesRaw = isset($_GET['fuelTypes']) ? trim($_GET['fuelTypes']) : '';
+        $fuelTypes = $fuelTypesRaw !== '' ? array_map('trim', explode(',', $fuelTypesRaw)) : [];
+
+        $where = [];
         $params = [];
 
-        // Apply search to multiple columns
-        if (!empty($search)) {
-            $searchTerm = "%$search%";
-            $baseSql .= " WHERE 
-                make LIKE ? OR 
-                model LIKE ? OR 
-                variant LIKE ? OR 
-                year LIKE ? OR 
-                type LIKE ? OR 
-                CAST(price AS CHAR) LIKE ? OR 
-                CAST(mileage AS CHAR) LIKE ? OR 
-                fuel_type LIKE ? OR 
-                transmission LIKE ? OR 
-                color LIKE ? OR 
-                description LIKE ? OR 
-                status LIKE ?";
-            
-            $params = array_fill(0, 12, $searchTerm);
+        // Search: apply across multiple text fields
+        if ($search !== '') {
+            $searchTerm = '%' . $search . '%';
+            $where[] = "(make LIKE ? OR model LIKE ? OR variant LIKE ? OR CAST(year AS CHAR) LIKE ? OR type LIKE ? OR CAST(price AS CHAR) LIKE ? OR CAST(mileage AS CHAR) LIKE ? OR fuel_type LIKE ? OR transmission LIKE ? OR color LIKE ? OR description LIKE ? OR status LIKE ?)";
+            // push 12 copies of searchTerm matching the number of LIKEs above
+            for ($i = 0; $i < 12; $i++) $params[] = $searchTerm;
         }
 
-        // Main query with pagination
-        $sql = "SELECT id, dealer_id, make, model, variant, year, type, price, mileage, fuel_type, transmission, color, main_image, description, warranty_id, status " 
-             . $baseSql . " LIMIT ? OFFSET ?";
-        $params[] = $limit;
-        $params[] = $offset;
+        if ($make !== '') {
+            $where[] = "make = ?";
+            $params[] = $make;
+        }
 
-        $stmt = $this->db->raw($sql, $params);
+        if ($year !== '') {
+            $where[] = "year = ?";
+            $params[] = $year;
+        }
+
+        if ($minPrice !== null) {
+            $where[] = "price >= ?";
+            $params[] = $minPrice;
+        }
+
+        if ($maxPrice !== null) {
+            $where[] = "price <= ?";
+            $params[] = $maxPrice;
+        }
+
+        if ($transmission !== '') {
+            $where[] = "transmission = ?";
+            $params[] = $transmission;
+        }
+
+        if (!empty($fuelTypes)) {
+            // create placeholders for IN clause
+            $placeholders = implode(',', array_fill(0, count($fuelTypes), '?'));
+            $where[] = "fuel_type IN ($placeholders)";
+            foreach ($fuelTypes as $ft) $params[] = $ft;
+        }
+
+        // Build WHERE clause
+        $whereSql = '';
+        if (!empty($where)) {
+            $whereSql = ' WHERE ' . implode(' AND ', $where);
+        }
+
+        // Fetch rows with pagination (use ORDER BY for deterministic results)
+        $sql = "SELECT id, dealer_id, make, model, variant, year, type, price, mileage, fuel_type, transmission, color, main_image, description, warranty_id, status
+                FROM cars
+                $whereSql
+                ORDER BY id DESC
+                LIMIT ? OFFSET ?";
+
+        // Append pagination params
+        $params_for_query = array_merge($params, [$limit, $offset]);
+
+        $stmt = $this->db->raw($sql, $params_for_query);
         $cars = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Count total records
-        $countSql = "SELECT COUNT(*) AS total " . $baseSql;
-        $countStmt = $this->db->raw($countSql, !empty($search) ? array_slice($params, 0, 12) : []);
-        $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+        // Count total matching records for pagination (reuse same WHERE)
+        $countSql = "SELECT COUNT(*) AS total FROM cars $whereSql";
+        $countStmt = $this->db->raw($countSql, $params);
+        $total = (int)$countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
         // Build response
         $response = [
@@ -394,8 +433,8 @@ class ApiController extends Controller {
             "pagination" => [
                 "page" => $page,
                 "limit" => $limit,
-                "total_records" => (int)$total,
-                "total_pages" => ceil($total / $limit)
+                "total_records" => $total,
+                "total_pages" => $total > 0 ? (int)ceil($total / $limit) : 1
             ]
         ];
 
@@ -409,5 +448,101 @@ class ApiController extends Controller {
     }
 }
 
+// ===============================
+//  Appointment Management
+// ===============================
+
+public function createAppointment()
+{
+    $this->api->require_method('POST');
+
+    // Decode JSON input (important for curl & frontend requests)
+    $rawInput = file_get_contents('php://input');
+    $input = json_decode($rawInput, true);
+    file_put_contents('debug_input.log', $rawInput);
+
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return $this->api->respond_error('Invalid JSON format', 400);
+    }
+
+    // ✅ Required only the fields that exist in your table
+    $requiredFields = ['car_id', 'appointment_at'];
+    $missing = [];
+    foreach ($requiredFields as $field) {
+        if (empty($input[$field])) {
+            $missing[] = $field;
+        }
+    }
+
+    if (!empty($missing)) {
+        return $this->api->respond_error('Missing required field(s): ' . implode(', ', $missing), 400);
+    }
+
+    try {
+        $this->db->raw("
+            INSERT INTO appointments (car_id, user_id, dealer_id, appointment_at, status, notes, created_at)
+            VALUES (?, ?, ?, ?, 'pending', ?, NOW())
+        ", [
+            $input['car_id'],
+            $input['user_id'] ?? 0,
+            $input['dealer_id'] ?? 1,
+            $input['appointment_at'],
+            $input['notes'] ?? null
+        ]);
+
+        $this->api->respond(['message' => 'Appointment booked successfully']);
+    } catch (Exception $e) {
+        $this->api->respond_error('Error booking appointment: ' . $e->getMessage(), 500);
+    }
+}
+
+
+public function listAppointments()
+{
+    $this->api->require_method('GET');
+
+    try {
+        $appointments = $this->db->table('appointments')
+            ->select('appointments.id, users.name AS user_name, users.email, users.phone, cars.make, cars.model, appointments.appointment_at, appointments.status, appointments.notes')
+            ->join('users', 'appointments.user_id = users.id')
+            ->join('cars', 'appointments.car_id = cars.id')
+            ->get_all();
+
+        $this->api->respond([
+            'status' => 'success',
+            'appointments' => $appointments
+        ]);
+    } catch (Exception $e) {
+        $this->api->respond_error('Failed to fetch appointments: ' . $e->getMessage(), 500);
+    }
+}
+
+public function updateAppointment($id) {
+    $this->api->require_method('PUT');
+    $input = $this->api->body();
+
+    $validStatuses = ['pending', 'approved', 'completed', 'cancelled'];
+    if (empty($input['status']) || !in_array($input['status'], $validStatuses)) {
+        return $this->api->respond_error('Invalid or missing status', 400);
+    }
+
+    try {
+        // Ensure the record exists
+        $appointment = $this->db->table('appointments')->where('id', $id)->get();
+        if (!$appointment) {
+            return $this->api->respond_error('Appointment not found', 404);
+        }
+
+        // Perform update
+        $this->db->raw("UPDATE appointments SET status = ? WHERE id = ?", [$input['status'], $id]);
+
+        $this->api->respond([
+            'status' => 'success',
+            'message' => 'Appointment status updated successfully.'
+        ]);
+    } catch (Exception $e) {
+        $this->api->respond_error('Failed to update appointment: ' . $e->getMessage(), 500);
+    }
+}
 
 }

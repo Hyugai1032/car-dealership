@@ -59,7 +59,10 @@ $router->delete('deletecars/{id}', 'ApiController::deleteCars');
 $router->post('/otp', 'ApiController::sendVerificationCode');   // send OTP
 $router->post('/otp/verify', 'ApiController::verifyCode');      // verify OTP
 $router->get('/email', 'ApiController::sendTestEmail');         // test route
-$router->get('/searchcars', 'ApiController@listCarsPaginated');
+$router->get('/searchcars', 'ApiController::listCarsPaginated');
+$router->post('createappointment', 'ApiController::createAppointment');
+$router->get('listappointment', 'ApiController::listAppointments');
+$router->put('updateappointment/{id}', 'ApiController::updateAppointment');
 
 
 

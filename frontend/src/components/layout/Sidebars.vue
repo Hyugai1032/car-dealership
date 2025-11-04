@@ -13,97 +13,54 @@
       <div class="nav-section">
         <h3 class="nav-section-title">MAIN</h3>
         <ul class="nav-links">
-          <li 
-            class="nav-item" 
-            :class="{ active: $route.name === 'dashboard' }"
-            @click="navigate('dashboard')"
-          >
+          <li class="nav-item" :class="{ active: $route.name === 'dashboard' }" @click="navigate('dashboard')">
             <i class="fas fa-home"></i>
             <span>Dashboard</span>
             <div v-if="$route.name === 'dashboard'" class="active-indicator"></div>
           </li>
-
-          <li 
-            class="nav-item" 
-            :class="{ active: $route.name === 'analytics' }"
-            @click="navigate('analytics')"
-          >
+          <li class="nav-item" :class="{ active: $route.name === 'analytics' }" @click="navigate('analytics')">
             <i class="fas fa-chart-line"></i>
             <span>Analytics</span>
             <div v-if="$route.name === 'analytics'" class="active-indicator"></div>
           </li>
-
-          <li 
-            class="nav-item"
-            :class="{ active: $route.name === 'cars-inventory' }"
-            @click="navigate('cars-inventory')"
-          >
+          <li class="nav-item" :class="{ active: $route.name === 'cars-inventory' }" @click="navigate('cars-inventory')">
             <i class="fas fa-car"></i>
             <span>Vehicle Inventory</span>
             <div v-if="$route.name === 'cars-inventory'" class="active-indicator"></div>
           </li>
-
-          <li 
-            class="nav-item"
-            :class="{ active: $route.name === 'dealers' }"
-            @click="navigate('dealers')"
-          >
+          <li class="nav-item" :class="{ active: $route.name === 'dealers' }" @click="navigate('dealers')">
             <i class="fas fa-store"></i>
             <span>Dealers</span>
             <div v-if="$route.name === 'dealers'" class="active-indicator"></div>
           </li>
         </ul>
       </div>
-      
+
       <div class="nav-section">
         <h3 class="nav-section-title">MANAGEMENT</h3>
         <ul class="nav-links">
-          <li 
-            class="nav-item"
-            :class="{ active: $route.name === 'appointment' }"
-            @click="navigate('appointment')"
-          >
+          <li class="nav-item" :class="{ active: $route.name === 'adminappointment' }" @click="navigate('adminappointment')">
             <i class="fas fa-calendar-check"></i>
             <span>Appointments</span>
-            <span class="badge">23</span>
-            <div v-if="$route.name === 'appointment'" class="active-indicator"></div>
+            <span class="badge" v-if="pendingCount > 0">{{ pendingCount }}</span>
+            <div v-if="$route.name === 'adminappointment'" class="active-indicator"></div>
           </li>
-
-          <li 
-            class="nav-item" 
-            :class="{ active: $route.name === 'cars-management' }"
-            @click="navigate('cars-management')"
-          >
+          <li class="nav-item" :class="{ active: $route.name === 'cars-management' }" @click="navigate('cars-management')">
             <i class="fas fa-car-side"></i>
             <span>Cars Management</span>
             <div v-if="$route.name === 'cars-management'" class="active-indicator"></div>
           </li>
-
-          <li 
-            class="nav-item"
-            :class="{ active: $route.name === 'customers' }"
-            @click="navigate('customers')"
-          >
+          <li class="nav-item" :class="{ active: $route.name === 'customers' }" @click="navigate('customers')">
             <i class="fas fa-users"></i>
             <span>Customers</span>
             <div v-if="$route.name === 'customers'" class="active-indicator"></div>
           </li>
-
-          <li 
-            class="nav-item"
-            :class="{ active: $route.name === 'financing' }"
-            @click="navigate('financing')"
-          >
+          <li class="nav-item" :class="{ active: $route.name === 'financing' }" @click="navigate('financing')">
             <i class="fas fa-file-invoice-dollar"></i>
             <span>Financing</span>
             <div v-if="$route.name === 'financing'" class="active-indicator"></div>
           </li>
-
-          <li 
-            class="nav-item"
-            :class="{ active: $route.name === 'settings' }"
-            @click="navigate('settings')"
-          >
+          <li class="nav-item" :class="{ active: $route.name === 'settings' }" @click="navigate('settings')">
             <i class="fas fa-cogs"></i>
             <span>Settings</span>
             <div v-if="$route.name === 'settings'" class="active-indicator"></div>
@@ -111,12 +68,10 @@
         </ul>
       </div>
     </nav>
-    
+
     <div class="sidebar-footer">
       <div class="user-profile">
-        <div class="avatar">
-          <i class="fas fa-user"></i>
-        </div>
+        <div class="avatar"><i class="fas fa-user"></i></div>
         <div class="user-info">
           <span class="user-name">Admin User</span>
           <span class="user-role">Administrator</span>
@@ -136,22 +91,51 @@
 
 <script>
 export default {
-  name: 'Sidebar',
+  name: "Sidebar",
   props: {
-    theme: { type: String, default: 'dark' }
+    theme: { type: String, default: "dark" }
   },
-  emits: ['toggle-theme'],
+  emits: ["toggle-theme"],
+  data() {
+    return {
+      pendingCount: 0
+    };
+  },
+  mounted() {
+    this.fetchPendingAppointments();
+
+    // Listen for global events to refresh badge when appointments change
+    window.addEventListener("updateSidebarBadge", this.fetchPendingAppointments);
+  },
+  unmounted() {
+    window.removeEventListener("updateSidebarBadge", this.fetchPendingAppointments);
+  },
   methods: {
+    async fetchPendingAppointments() {
+      try {
+        const response = await fetch("http://localhost:8000/listappointment");
+        if (!response.ok) throw new Error("Failed to fetch appointments");
+
+        const data = await response.json();
+
+        // Ensure appointments array exists
+        if (!data.appointments) return;
+
+        // Count pending appointments (case-sensitive)
+        this.pendingCount = data.appointments.filter(a => a.status === "pending").length;
+      } catch (error) {
+        console.error("Error fetching pending appointments:", error);
+      }
+    },
     navigate(routeName) {
-      this.$router.push({ name: routeName })
+      this.$router.push({ name: routeName });
     },
     logout() {
-      // Example: clear auth and redirect
-      localStorage.removeItem('user')
-      this.$router.push({ name: 'login' })
+      localStorage.removeItem("user");
+      this.$router.push({ name: "login" });
     }
   }
-}
+};
 </script>
 
 <style scoped>
@@ -265,10 +249,13 @@ export default {
 .badge {
   background: var(--text-accent);
   color: white;
-  padding: 2px 8px;
-  border-radius: 10px;
+  padding: 2px 2px;
+  border-radius: 5px;
   font-size: 0.75rem;
   font-weight: 600;
+  right: 30px;
+  max-width: 50px; /* ensures small numbers still take space */
+  text-align: center;
 }
 
 .active-indicator {

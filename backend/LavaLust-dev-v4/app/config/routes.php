@@ -123,5 +123,6 @@ $router->post('refresh', 'ApiController::refresh');
 $router->post('otp', 'ApiController::SendVerification');
 $router->post('cars/{id}', 'ApiController::updateCars');
 $router->post('/auth/google', 'ApiController::google_login');
+$router->options('/auth/google', 'ApiController::google_login');
 
 

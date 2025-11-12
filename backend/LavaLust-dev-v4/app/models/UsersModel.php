@@ -118,4 +118,15 @@ class UsersModel extends Model {
                         ->where('id', $user_id)
                         ->update($update_data);
     }
+
+     // ✅ Custom "get" function to retrieve one record by condition
+    public function get($conditions = [])
+    {
+        $query = $this->db->table($this->table);
+        foreach ($conditions as $key => $value) {
+            $query->where($key, $value);
+        }
+
+        return $query->get()->row_array(); // Return one row as associative array
+    }
 }

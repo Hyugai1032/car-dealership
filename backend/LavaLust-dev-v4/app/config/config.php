@@ -51,12 +51,6 @@ defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 | My Configs:
 */
 
-// Allow requests from your Vue dev server
-header("Access-Control-Allow-Origin: http://localhost:5173");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-
-
 /*
 | -------------------------------------------------------------------
 | LavaLust Version

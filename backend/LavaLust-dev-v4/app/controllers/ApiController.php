@@ -106,46 +106,76 @@ class ApiController extends Controller {
     }
 
     public function googleLogin()
-        {
-            header("Access-Control-Allow-Origin: http://localhost:5173");
-            header("Access-Control-Allow-Methods: POST, OPTIONS");
-            header("Access-Control-Allow-Headers: Content-Type, Authorization");
-            if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-                http_response_code(200);
-                exit();
-            }
-            $this->api->require_method('POST');
-            $input = $this->api->body();
-            $credential = $input['credential'] ?? null;
+    {
+        // Manual CORS headers (applied to all responses from this method)
+        header('Access-Control-Allow-Origin: http://localhost:5173');
+        header('Access-Control-Allow-Methods: POST, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type');
+        // header('Access-Control-Allow-Credentials: true'); // Add if using cookies/auth tokens in fetch (not needed here)
 
-            if (!$credential) {
-                $this->api->respond_error('Missing Google credential', 400);
+        // Manual preflight handling in case automatic fails
+        if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+            http_response_code(200);
+            exit();
+        }
+
+        $this->api->require_method('POST');
+
+        $input = $this->api->body();
+        $credential = $input['credential'] ?? null;
+
+        if (!$credential) {
+            $this->api->respond_error('Missing Google credential', 400);
+            return;
+        }
+
+        require_once __DIR__ . '/../../../vendor/autoload.php';
+        $client = new \Google_Client(['client_id' => '1084979266133-d1bvpmpb5devqn5cl0pscuv9k01l9p9t.apps.googleusercontent.com']);
+
+        try {
+            $payload = $client->verifyIdToken($credential);
+            if (!$payload) {
+                $this->api->respond_error('Invalid Google token', 401);
                 return;
             }
 
-            // ⬇️ Replace this old require line with this new one:
-            require_once __DIR__ . '/../../../vendor/autoload.php';
-            $client = new Google_Client(['client_id' => '1084979266133-d1bvpmpb5devqn5cl0pscuv9k01l9p9t.apps.googleusercontent.com']);
+            $google_id = $payload['sub'];
+            $email     = $payload['email'];
+            $name      = $payload['name'] ?? '';
+            $picture   = $payload['picture'] ?? null;
 
-            try {
-                $payload = $client->verifyIdToken($credential);
-                if (!$payload) {
-                    $this->api->respond_error('Invalid Google token', 401);
-                    return;
-                }
+            // ✅ Check if user exists in DB using LavaLust syntax
+            $userModel = $this->call->model('UsersModel');
+            $user = $userModel->get(['google_id' => $google_id]);
 
-                // ✅ If payload is valid, continue login/registration logic...
-                $google_id = $payload['sub'];
-                $email     = $payload['email'];
-                $name      = $payload['name'] ?? '';
-                $picture   = $payload['picture'] ?? null;
+            if (!$user) {
+                // Auto-register new user
+                $userData = [
+                    'google_id' => $google_id,
+                    'email' => $email,
+                    'name' => $name,
+                    'profile_picture' => $picture,
+                    'created_at' => date('Y-m-d H:i:s')
+                ];
 
-                // Check or create user, issue tokens, etc.
-                
-            } catch (Exception $e) {
-                $this->api->respond_error('Google verification failed: ' . $e->getMessage(), 500);
+                $userModel->insert($userData);
+
+                // Retrieve newly inserted user
+                $user = $userModel->get(['google_id' => $google_id]);
             }
+
+            // ✅ Return user info as JSON
+            $this->api->respond([
+                'success' => true,
+                'message' => 'Google login successful',
+                'user' => $user
+            ]);
+
+        } catch (Exception $e) {
+            $this->api->respond_error('Google verification failed: ' . $e->getMessage(), 500);
         }
+    }
+
 
 
     public function login() {

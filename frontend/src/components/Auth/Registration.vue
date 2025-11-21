@@ -126,7 +126,9 @@
         </button>
 
         <div class="login-redirect">
-          <p>Already have an account? <a href="#" @click.prevent="$emit('registered')" class="login-link">Sign In</a></p>
+          <p>Already have an account? 
+            <router-link to="/login" class="login-link">Sign In</router-link>
+          </p>
         </div>
       </form>
 

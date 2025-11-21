@@ -92,7 +92,7 @@
       
         
         <div class="login-redirect">
-          <p>Don't have an account? <a href="#" @click.prevent="$emit('no-account')" class="login-link">Sign Up</a></p>
+          <p>Don't have an account? <router-link to="/register" class="login-link">Sign In</router-link></p>
         </div>
       </div>
 
@@ -176,7 +176,7 @@ async handleLogin() {
           if (this.rememberMe) {
             localStorage.setItem('rememberMe', 'true');
           }
-          this.$emit('manage-cars', data.user); // ✅ triggers App.vue to load dashboard
+          this.$router.push('/'); // ✅ triggers App.vue to load dashboard
         } else {
           this.errorMessage = data.message || 'Invalid credentials';
         }

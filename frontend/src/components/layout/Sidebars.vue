@@ -5,7 +5,7 @@
         <div class="logo-icon">
           <i class="fas fa-car"></i>
         </div>
-        <span class="logo-text">LuxuryAuto</span>
+        <span class="logo-text">RideZone</span>
       </div>
     </div>
     
@@ -23,15 +23,15 @@
             <span>Analytics</span>
             <div v-if="$route.name === 'analytics'" class="active-indicator"></div>
           </li>
-          <li class="nav-item" :class="{ active: $route.name === 'cars-inventory' }" @click="navigate('cars-inventory')">
+          <li class="nav-item" :class="{ active: $route.name === 'car-inventorys' }" @click="navigate('car-inventorys')">
             <i class="fas fa-car"></i>
             <span>Vehicle Inventory</span>
-            <div v-if="$route.name === 'cars-inventory'" class="active-indicator"></div>
+            <div v-if="$route.name === 'car-inventorys'" class="active-indicator"></div>
           </li>
-          <li class="nav-item" :class="{ active: $route.name === 'dealers' }" @click="navigate('dealers')">
+          <li class="nav-item" :class="{ active: $route.name === 'dealer' }" @click="navigate('dealer')">
             <i class="fas fa-store"></i>
             <span>Dealers</span>
-            <div v-if="$route.name === 'dealers'" class="active-indicator"></div>
+            <div v-if="$route.name === 'dealer'" class="active-indicator"></div>
           </li>
         </ul>
       </div>

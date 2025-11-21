@@ -9,8 +9,7 @@
     "dev:frontend": "cd frontend && npm run dev",
     "build:frontend": "cd frontend && npm run build",
     "install:all": "npm install --workspaces",
-    "start": "concurrently \"npm:dev:frontend\" \"npm:dev:backend\"",
-    "dev:backend": "cd backend && php -S localhost:8000 -t public"
+    "start": "concurrently \"cd backend/Lavalust-dev-v4 && php -S localhost:8000 -t public\" \"npm run dev --prefix frontend\""
   },
   "devDependencies": {
     "concurrently": "^8.0.0"

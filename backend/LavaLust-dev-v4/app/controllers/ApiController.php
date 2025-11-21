@@ -545,4 +545,335 @@ public function updateAppointment($id) {
     }
 }
 
+public function uploadCarImage()
+{
+    $this->api->require_method('POST');
+
+    // Check if file was uploaded
+    if (!isset($_FILES['main_image_file']) || $_FILES['main_image_file']['error'] === UPLOAD_ERR_NO_FILE) {
+        return $this->api->respond_error('No file uploaded', 400);
+    }
+
+    $file = $_FILES['main_image_file'];
+
+    // Validate upload error
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        $errors = [
+            UPLOAD_ERR_INI_SIZE   => 'File exceeds upload_max_filesize',
+            UPLOAD_ERR_FORM_SIZE  => 'File exceeds MAX_FILE_SIZE',
+            UPLOAD_ERR_PARTIAL    => 'File only partially uploaded',
+            UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+            UPLOAD_ERR_EXTENSION  => 'File upload stopped by extension',
+        ];
+        $msg = $errors[$file['error']] ?? 'Unknown upload error';
+        return $this->api->respond_error($msg, 400);
+    }
+
+    // Validate file type
+    $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!in_array($file['type'], $allowedTypes)) {
+        return $this->api->respond_error('Invalid file type. Only JPG/PNG allowed.', 400);
+    }
+
+    // Validate file size (max 2MB)
+    if ($file['size'] > 2 * 1024 * 1024) {
+        return $this->api->respond_error('File too large. Max 2MB allowed.', 400);
+    }
+
+    // Create upload directory if not exists
+    $uploadDir = __DIR__ . '/../../../public/uploads/cars/';
+    if (!is_dir($uploadDir)) {
+        if (!mkdir($uploadDir, 0755, true)) {
+            return $this->api->respond_error('Failed to create upload directory', 500);
+        }
+    }
+
+    // Generate unique filename
+    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $filename = time() . '_' . uniqid() . '.' . $ext;
+    $targetPath = $uploadDir . $filename;
+
+    // Move uploaded file
+    if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+        return $this->api->respond_error('Failed to save file', 500);
+    }
+
+    // Return public URL
+    $publicUrl = '/uploads/cars/' . $filename;
+
+    return $this->api->respond([
+        'status' => 'success',
+        'url'    => $publicUrl,
+        'path'   => $publicUrl  // same as url for DB
+    ]);
+}
+
+public function downloadFile($filename)
+{
+    $filePath = dirname(__DIR__, 2) . '/public/uploads/' . basename($filename);
+
+    if (!file_exists($filePath)) {
+        return $this->response->json([
+            'status' => 'error',
+            'message' => 'File not found.'
+        ], 404);
+    }
+
+    header('Content-Description: File Transfer');
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename="' . basename($filePath) . '"');
+    header('Expires: 0');
+    header('Cache-Control: must-revalidate');
+    header('Pragma: public');
+    header('Content-Length: ' . filesize($filePath));
+    readfile($filePath);
+    exit;
+
+}
+
+// ==============================
+// DEALER MANAGEMENT (CRUD) - Based on Your Exact Table
+// ==============================
+
+/**
+ * List all dealers (with search + pagination)
+ */
+public function listDealers()
+{
+    try {
+        $page   = max(1, (int)($_GET['page'] ?? 1));
+        $limit  = max(1, min(50, (int)($_GET['limit'] ?? 10)));
+        $offset = ($page - 1) * $limit;
+        $search = trim($_GET['search'] ?? '');
+
+        $where = [];
+        $params = [];
+
+        if ($search !== '') {
+            $like = "%$search%";
+            $where[] = "(name LIKE ? OR email LIKE ? OR phone LIKE ? OR address LIKE ? OR description LIKE ?)";
+            $params = array_fill(0, 5, $like); // 5 fields
+        }
+
+        $whereSql = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
+
+        $sql = "SELECT id, name, description, address, phone, email, logo, created_at 
+                FROM dealers 
+                $whereSql 
+                ORDER BY created_at DESC 
+                LIMIT ? OFFSET ?";
+
+        $queryParams = array_merge($params, [$limit, $offset]);
+        $stmt = $this->db->raw($sql, $queryParams);
+        $dealers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Total count for pagination
+        $countSql = "SELECT COUNT(*) FROM dealers $whereSql";
+        $total = (int)$this->db->raw($countSql, $params)->fetchColumn();
+
+        $this->api->respond([
+            'status' => 'success',
+            'dealers' => $dealers,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total_records' => $total,
+                'total_pages' => $total > 0 ? ceil($total / $limit) : 1
+            ]
+        ]);
+
+    } catch (Exception $e) {
+        $this->api->respond_error('Failed to fetch dealers: ' . $e->getMessage(), 500);
+    }
+}
+
+/**
+ * Create a new dealer (Admin only)
+ */
+public function createDealer()
+{
+    $this->api->require_method('POST');
+    $this->requireAdmin(); // uses helper below
+
+    $input = $this->api->body();
+
+    $required = ['name'];
+    $missing = array_reduce($required, fn($carry, $field) => 
+        empty($input[$field]) ? [...$carry, $field] : $carry, []);
+
+    if (!empty($missing)) {
+        return $this->api->respond_error('Missing required fields: ' . implode(', ', $missing), 400);
+    }
+
+    // Optional: Prevent duplicate email
+    if (!empty($input['email'])) {
+        $exists = $this->db->raw("SELECT id FROM dealers WHERE email = ?", [$input['email']])->fetch();
+        if ($exists) {
+            return $this->api->respond_error('A dealer with this email already exists', 400);
+        }
+    }
+
+    try {
+        $this->db->raw("
+            INSERT INTO dealers 
+                (name, description, address, phone, email, logo)
+            VALUES 
+                (?, ?, ?, ?, ?, ?)
+        ", [
+            $input['name'],
+            $input['description'] ?? null,
+            $input['address'] ?? null,
+            $input['phone'] ?? null,
+            $input['email'] ?? null,
+            $input['logo'] ?? null
+        ]);
+
+        $dealerId = $this->db->lastInsertId();
+
+        $this->api->respond([
+            'status' => 'success',
+            'message' => 'Dealer created successfully',
+            'dealer_id' => (int)$dealerId
+        ]);
+    } catch (Exception $e) {
+        $this->api->respond_error('Failed to create dealer: ' . $e->getMessage(), 500);
+    }
+}
+
+/**
+ * Update dealer
+ */
+public function updateDealer($id)
+{
+    $this->api->require_method('PUT');
+    $this->requireAdmin();
+
+    $input = $this->api->body();
+
+    // Check if dealer exists
+    $exists = $this->db->raw("SELECT id FROM dealers WHERE id = ?", [$id])->fetch();
+    if (!$exists) {
+        return $this->api->respond_error('Dealer not found', 404);
+    }
+
+    $allowed = ['name', 'description', 'address', 'phone', 'email', 'logo'];
+    $set = [];
+    $params = [];
+
+    foreach ($allowed as $field) {
+        if (isset($input[$field])) {
+            $set[] = "$field = ?";
+            $params[] = $input[$field] === '' ? null : $input[$field];
+        }
+    }
+
+    if (empty($set)) {
+        return $this->api->respond_error('No data provided to update', 400);
+    }
+
+    $params[] = $id;
+    $setSql = implode(', ', $set);
+
+    try {
+        $this->db->raw("UPDATE dealers SET $setSql WHERE id = ?", $params);
+        $this->api->respond([
+            'status' => 'success',
+            'message' => 'Dealer updated successfully'
+        ]);
+    } catch (Exception $e) {
+        $this->api->respond_error('Update failed: ' . $e->getMessage(), 500);
+    }
+}
+
+/**
+ * Delete dealer
+ */
+public function deleteDealer($id)
+{
+    $this->api->require_method('DELETE');
+    $this->requireAdmin();
+
+    $dealer = $this->db->raw("SELECT id FROM dealers WHERE id = ?", [$id])->fetch();
+    if (!$dealer) {
+        return $this->api->respond_error('Dealer not found', 404);
+    }
+
+    // Optional: Block delete if dealer has cars
+    $hasCars = $this->db->raw("SELECT 1 FROM cars WHERE dealer_id = ? LIMIT 1", [$id])->fetch();
+    if ($hasCars) {
+        return $this->api->respond_error('Cannot delete dealer that has listed cars', 400);
+    }
+
+    try {
+        $this->db->raw("DELETE FROM dealers WHERE id = ?", [$id]);
+        $this->api->respond([
+            'status' => 'success',
+            'message' => 'Dealer deleted successfully'
+        ]);
+    } catch (Exception $e) {
+        $this->api->respond_error('Delete failed: ' . $e->getMessage(), 500);
+    }
+}
+
+/**
+ * Upload Dealer Logo (returns public URL)
+ */
+public function uploadDealerLogo()
+{
+    $this->api->require_method('POST');
+    $this->requireAdmin();
+
+    if (!isset($_FILES['logo_file']) || $_FILES['logo_file']['error'] === UPLOAD_ERR_NO_FILE) {
+        return $this->api->respond_error('No file uploaded', 400);
+    }
+
+    $file = $_FILES['logo_file'];
+
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        return $this->api->respond_error('Upload error occurred', 400);
+    }
+
+    $allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!in_array($file['type'], $allowed)) {
+        return $this->api->respond_error('Only JPG, PNG, WebP images are allowed', 400);
+    }
+
+    if ($file['size'] > 3 * 1024 * 1024) { // 3MB max
+        return $this->api->respond_error('File too large (max 3MB)', 400);
+    }
+
+    $uploadDir = __DIR__ . '/../../../public/uploads/dealers/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+
+    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $filename = 'dealer_' . time() . '_' . uniqid() . '.' . $ext;
+    $path = $uploadDir . $filename;
+
+    if (!move_uploaded_file($file['tmp_name'], $path)) {
+        return $this->api->respond_error('Failed to save file', 500);
+    }
+
+    $publicUrl = '/uploads/dealers/' . $filename;
+
+    $this->api->respond([
+        'status' => 'success',
+        'url' => $publicUrl,
+        'message' => 'Logo uploaded successfully'
+    ]);
+}
+
+/**
+ * Helper: Require Admin Role
+ */
+private function requireAdmin()
+{
+    $auth = $this->api->require_jwt();
+    if (($auth['role'] ?? '') !== 'admin') {
+        $this->api->respond_error('Admin access required', 403);
+    }
+}
+
 }

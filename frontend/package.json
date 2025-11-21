@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
+    "@vueuse/core": "^14.0.0",
     "chart.js": "^4.5.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
@@ -17,7 +18,9 @@
     "pinia-plugin-persistedstate": "^4.5.0",
     "three": "^0.181.0",
     "vue": "^3.5.22",
-    "vue-router": "^4.6.3"
+    "vue-easy-lightbox": "^1.19.0",
+    "vue-router": "^4.6.3",
+    "vue3-toastify": "^0.2.8"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.1",

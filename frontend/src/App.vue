@@ -1,7 +1,7 @@
 <template>
   <div id="app" :class="theme">
     <Sidebar
-      v-if="!['login', 'registration', 'cars-page', 'appointmentpage'].includes($route.name)"
+      v-if="!['login', 'registration', 'cars-page', 'appointmentpage', 'car-inventory', 'dealers'].includes($route.name)"
       :theme="theme"
       :currentPage="$route.name"
       @toggle-theme="toggleTheme"
@@ -9,7 +9,7 @@
 
     <div
       class="main-content"
-      :class="{ 'full-width': ['login', 'registration', 'cars-page', 'appointmentpage'].includes($route.name) }"
+      :class="{ 'full-width': ['login', 'registration', 'cars-page'].includes($route.name) }"
     >
       <router-view :theme="theme" />
     </div>

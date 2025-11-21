@@ -63,6 +63,10 @@ $router->get('/searchcars', 'ApiController::listCarsPaginated');
 $router->post('createappointment', 'ApiController::createAppointment');
 $router->get('listappointment', 'ApiController::listAppointments');
 $router->put('updateappointment/{id}', 'ApiController::updateAppointment');
-
-
-
+$router->post('/upload-car-image', 'ApiController::uploadCarImage');
+$router->get('/download/{filename}', 'ApiController::downloadFile');
+$router->get('/dealers',               'ApiController::listDealers');
+$router->post('/dealers',              'ApiController::createDealer');
+$router->put('/dealers/{id}',          'ApiController::updateDealer');
+$router->delete('/dealers/{id}',       'ApiController::deleteDealer');
+$router->post('/dealers/upload-logo',  'ApiController::uploadDealerLogo');

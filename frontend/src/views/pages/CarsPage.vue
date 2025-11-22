@@ -1,22 +1,20 @@
 <template>
   <div class="cars-page bg-gray-50 min-h-screen flex flex-col">
     <!-- Header -->
-    <header class="bg-white shadow-sm p-4 flex justify-between items-center">
+    <header class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-50">
       <h1 class="text-2xl font-semibold text-red-600">RideZone</h1>
-      <nav class="space-x-6 text-gray-700 font-medium">
+      <nav class="space-x-6 text-gray-700 font-medium flex items-center">
         <a href="#" class="hover:text-red-600">Home</a>
         <a href="#" class="text-red-600 border-b-2 border-red-600">Cars</a>
+        <router-link to="/car-comparison" class="relative hover:text-red-600 flex items-center gap-1 font-bold">
+          Compare
+          <span v-if="compareIds.length" class="absolute -top-3 -right-4 bg-red-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center animate-pulse">
+            {{ compareIds.length }}
+          </span>
+        </router-link>
         <a href="#" class="hover:text-red-600">About</a>
         <a href="#" class="hover:text-red-600">Contact</a>
-        <button
-          @click="$router.push({ name: 'login' })"
-          :class="[
-            'px-4 py-1 rounded transition',
-            $route.name === 'login'
-              ? 'bg-red-600 text-white hover:bg-red-700'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          ]"
-        >
+        <button @click="$router.push({ name: 'login' })" class="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
           Login
         </button>
       </nav>
@@ -106,6 +104,19 @@
 
         <div v-if="cars.length" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="car in cars" :key="car.id" class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition relative">
+
+              <label class="absolute top-4 right-4 z-10 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg flex items-center gap-2 cursor-pointer border-2 border-gray-200">
+                <input 
+                  type="checkbox" 
+                  :value="car.id" 
+                  v-model="compareIds"
+                  class="w-5 h-5 text-red-600 rounded focus:ring-red-500"
+                >
+                <span class="font-bold text-sm" :class="compareIds.includes(car.id) ? 'text-red-600' : 'text-gray-600'">
+                  {{ compareIds.includes(car.id) ? 'Added' : 'Compare' }}
+                </span>
+              </label>
+
             <!-- Clickable Image with Lightbox -->
             <img
               :src="getCarImage(car.main_image)"
@@ -216,6 +227,22 @@ const showModal = ref(false)
 const selectedCar = ref(null)
 const appointmentList = ref(null)
 const userId = 1 // Replace with auth store later
+
+// === COMPARE SYSTEM (2 CARS ONLY) ===
+const compareIds = ref([])
+
+// Load from localStorage
+onMounted(() => {
+  const saved = localStorage.getItem('ridezone_compare')
+  if (saved) {
+    compareIds.value = JSON.parse(saved).slice(0, 2)
+  }
+})
+
+// Auto-save to localStorage
+watch(compareIds, (newVal) => {
+  localStorage.setItem('ridezone_compare', JSON.stringify(newVal.slice(0, 2)))
+}, { deep: true })
 
 function openModal(carId) {
   selectedCar.value = carId

@@ -12,6 +12,7 @@ import UserAppointmentPage from '../views/UserAppointments.vue'
 import CarInventory from '../views/pages/CarInventory.vue'
 import Dealers from '../views/pages/Dealers.vue'
 import UserManagement from '../views/pages/UserManagement.vue'
+import CarComparison from '../views/pages/CarComparison.vue'
 
 const routes = [
   { path: '/', name: 'dashboard', component: Dashboard },
@@ -24,7 +25,8 @@ const routes = [
   { path: '/adminappointment', name: 'adminappointment', component: AdminAppoinmentsManagemement },
   { path: '/car-inventory', name: 'car-inventorys', component: CarInventory },
   { path: '/dealers', name: 'dealer', component: Dealers },
-  { path: '/user-management', name: 'user-management', component: UserManagement }
+  { path: '/user-management', name: 'user-management', component: UserManagement },
+  { path: '/car-comparison', name: 'car-comparison', component: CarComparison }
 ]
 
 const router = createRouter({

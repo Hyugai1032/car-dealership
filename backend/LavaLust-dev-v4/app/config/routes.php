@@ -53,6 +53,8 @@ $router->post('/refresh', 'ApiController::refresh');
 $router->post('/otp', 'ApiController::sendVerificationCode');
 $router->post('/otp/verify', 'ApiController::verifyCode');
 $router->get('/email', 'ApiController::sendTestEmail'); // test only
+$router->post('/forgot-password', 'MailController::sendForgotPassword');
+$router->post('/reset-password', 'MailController::resetPassword');
 // ===================================================================
 // USER MANAGEMENT — CLEAN SINGULAR ROUTES (PRO LEVEL)
 // ===================================================================
@@ -80,6 +82,8 @@ $router->post('/upload-car-image', 'ApiController::uploadCarImage');
 $router->post('/createappointment', 'ApiController::createAppointment');
 $router->get('/listappointment', 'ApiController::listAppointments');
 $router->put('/updateappointment/{id}', 'ApiController::updateAppointment');
+$router->delete('/deleteappointment/{id}', 'ApiController::deleteAppointment');
+$router->get('/get-booked-dates/{car_id}', 'ApiController::getBookedDates');
 
 // ===================================================================
 // DEALERS MANAGEMENT
@@ -93,3 +97,7 @@ $router->post('/dealers/upload-logo', 'ApiController::uploadDealerLogo');
 // FILES
 // ===================================================================
 $router->get('/download/{filename}', 'ApiController::downloadFile');
+
+// ===================================================================
+// CAR COMPARISON
+$router->post('/api/compare/cars', 'ApiController::compareCars');

@@ -253,6 +253,108 @@ class ApiController extends Controller {
         $this->api->respond(['message' => 'User updated']);
     }
 
+// ===============================
+// GET BOOKED DATES — ONE APPROVED APPOINTMENT PER DAY ONLY
+// ===============================
+public function getBookedDates($car_id)
+{
+    $this->api->require_method('GET');
+
+    $carId = (int)$car_id;  // ← direktang gamitin ang $car_id mula sa route!
+    
+    if ($carId <= 0) {
+        return $this->api->respond_error('Invalid car_id', 400);
+    }
+
+    try {
+        $stmt = $this->db->raw("
+            SELECT DATE(appointment_at) as date
+            FROM appointments
+            WHERE car_id = ?
+              AND status = 'approved'
+              AND DATE(appointment_at) >= CURDATE()
+            GROUP BY DATE(appointment_at)
+            HAVING COUNT(*) >= 1
+        ", [$carId]);
+
+        $dates = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        $bookedDates = array_map(fn($d) => date('Y-m-d', strtotime($d)), $dates);
+
+        return $this->api->respond([
+            'status'       => 'success',
+            'booked_dates' => $bookedDates
+        ]);
+
+    } catch (Exception $e) {
+        return $this->api->respond_error('Failed: ' . $e->getMessage(), 500);
+    }
+}
+
+    // NEW FUNCTION — PARA LANG SA COMPARISON (SUPER FAST & CLEAN)
+    public function compareCars()
+    {
+    // LavaLust v4: gamitin ang file_get_contents para sa JSON body
+    $raw = file_get_contents('php://input');
+    $data = json_decode($raw, true) ?: $_POST;
+
+    $ids = $data['ids'] ?? [];
+
+    // Validation
+    if (!is_array($ids) || count($ids) === 0 || count($ids) > 2) {
+        return $this->api->respond([
+            'status'  => 'error',
+            'message' => 'Select 1 or 2 cars only'
+        ], 400);
+    }
+
+    $ids = array_map('intval', $ids);
+    $placeholders = str_repeat('?,', count($ids) - 1) . '?';
+
+    try {
+        $stmt = $this->db->raw("
+            SELECT 
+                c.id, c.make, c.model, c.variant, c.year, c.price,
+                c.transmission, c.fuel_type, c.main_image, c.description, c.status,
+                w.provider AS warranty_provider,
+                w.coverage AS warranty_coverage,
+                w.expiry_date AS warranty_expiry_date
+            FROM cars c
+            LEFT JOIN warranties w ON c.id = w.car_id
+            WHERE c.id IN ($placeholders)
+            ORDER BY FIELD(c.id, " . implode(',', $ids) . ")
+        ", $ids);
+
+        // CORRECT LAVA LUST V4: gamitin ang fetchAll(PDO::FETCH_ASSOC)
+        $cars = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Build warranty object
+        foreach ($cars as &$car) {
+            $car['warranty'] = null;
+            if ($car['warranty_provider']) {
+                $car['warranty'] = [
+                    'provider'    => $car['warranty_provider'],
+                    'coverage'    => $car['warranty_coverage'] ?? 'Standard',
+                    'expiry_date' => $car['warranty_expiry_date']
+                ];
+            }
+            unset($car['warranty_provider'], $car['warranty_coverage'], $car['warranty_expiry_date']);
+        }
+
+        $this->api->respond([
+            'status' => 'success',
+            'cars'   => $cars,
+            'count'  => count($cars)
+        ]);
+
+    } catch (Exception $e) {
+        $this->api->respond([
+            'status'  => 'error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+    }    
+
+    
     public function listCars() {
         try {
             // Query all cars with the specified fields
@@ -456,32 +558,28 @@ public function createAppointment()
 {
     $this->api->require_method('POST');
 
-    // Decode JSON input (important for curl & frontend requests)
     $rawInput = file_get_contents('php://input');
     $input = json_decode($rawInput, true);
-    file_put_contents('debug_input.log', $rawInput);
+    file_put_contents('debug_input.log', $rawInput . PHP_EOL, FILE_APPEND);
 
     if (json_last_error() !== JSON_ERROR_NONE) {
         return $this->api->respond_error('Invalid JSON format', 400);
     }
 
-    // ✅ Required only the fields that exist in your table
-    $requiredFields = ['car_id', 'appointment_at'];
-    $missing = [];
-    foreach ($requiredFields as $field) {
-        if (empty($input[$field])) {
-            $missing[] = $field;
-        }
-    }
+    $required = ['car_id', 'appointment_at'];
+    $missing = array_filter($required, fn($field) => empty($input[$field]));
 
     if (!empty($missing)) {
-        return $this->api->respond_error('Missing required field(s): ' . implode(', ', $missing), 400);
+        return $this->api->respond_error('Missing required: ' . implode(', ', $missing), 400);
     }
 
     try {
+        // INSERT APPOINTMENT
         $this->db->raw("
-            INSERT INTO appointments (car_id, user_id, dealer_id, appointment_at, status, notes, created_at)
-            VALUES (?, ?, ?, ?, 'pending', ?, NOW())
+            INSERT INTO appointments 
+                (car_id, user_id, dealer_id, appointment_at, status, notes, created_at) 
+            VALUES 
+                (?, ?, ?, ?, 'pending', ?, NOW())
         ", [
             $input['car_id'],
             $input['user_id'] ?? 0,
@@ -490,9 +588,56 @@ public function createAppointment()
             $input['notes'] ?? null
         ]);
 
-        $this->api->respond(['message' => 'Appointment booked successfully']);
+        // FIXED: Use MySQL LAST_INSERT_ID() via raw query
+        $stmt = $this->db->raw("SELECT LAST_INSERT_ID() as id");
+        $appointmentId = $stmt->fetch(PDO::FETCH_ASSOC)['id'] ?? 0;
+
+        if ($appointmentId <= 0) {
+            return $this->api->respond_error('Failed to create appointment', 500);
+        }
+
+        // === GET DATA FOR EMAIL ===
+        $stmt = $this->db->raw("
+            SELECT 
+                a.appointment_at, a.notes,
+                c.make, c.model, c.variant, c.year,
+                u.name AS user_name, u.email AS user_email
+            FROM appointments a
+            JOIN cars c ON a.car_id = c.id
+            JOIN users u ON a.user_id = u.id
+            WHERE a.id = ?
+        ", [$appointmentId]);
+
+        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        // Sa loob ng createAppointment(), palitan mo ‘to:
+        if ($data && filter_var($data['user_email'], FILTER_VALIDATE_EMAIL)) {
+            $this->sendBookingConfirmationEmail(  // ← DITO ANG TAMA!
+                [
+                    'appointment_at' => $data['appointment_at'],
+                    'notes' => $data['notes'] ?? ''
+                ],
+                [
+                    'make'     => $data['make'],
+                    'model'    => $data['model'],
+                    'variant'  => $data['variant'] ?? '',
+                    'year'     => $data['year']
+                ],
+                [
+                    'name'  => $data['user_name'],
+                    'email' => $data['user_email']
+                ]
+            );
+        }
+
+        return $this->api->respond([
+            'message' => 'Appointment booked successfully',
+            'appointment_id' => $appointmentId
+        ]);
+
     } catch (Exception $e) {
-        $this->api->respond_error('Error booking appointment: ' . $e->getMessage(), 500);
+        error_log("Appointment error: " . $e->getMessage());
+        return $this->api->respond_error('Failed to book appointment', 500);
     }
 }
 
@@ -517,31 +662,48 @@ public function listAppointments()
     }
 }
 
-public function updateAppointment($id) {
+public function updateAppointment($id)
+{
     $this->api->require_method('PUT');
     $input = $this->api->body();
 
-    $validStatuses = ['pending', 'approved', 'completed', 'cancelled'];
-    if (empty($input['status']) || !in_array($input['status'], $validStatuses)) {
-        return $this->api->respond_error('Invalid or missing status', 400);
+    $validStatuses = ['pending', 'approved', 'completed', 'cancelled', 'rejected'];
+    if (!in_array($input['status'], $validStatuses)) {
+        return $this->api->respond_error('Invalid status', 400);
     }
 
     try {
-        // Ensure the record exists
-        $appointment = $this->db->table('appointments')->where('id', $id)->get();
-        if (!$appointment) {
-            return $this->api->respond_error('Appointment not found', 404);
+        // Get current + related data BEFORE update
+        $stmt = $this->db->raw("
+            SELECT a.*, c.make, c.model, c.variant, c.year, u.name, u.email
+            FROM appointments a
+            JOIN cars c ON a.car_id = c.id
+            JOIN users u ON a.user_id = u.id
+            WHERE a.id = ?
+        ", [$id]);
+
+        $appt = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$appt) return $this->api->respond_error('Not found', 404);
+
+        $oldStatus = $appt['status'];
+        $newStatus = $input['status'];
+
+        // Update status
+        $this->db->raw("UPDATE appointments SET status = ? WHERE id = ?", [$newStatus, $id]);
+
+        // Send email only if status changed to important ones
+        if ($oldStatus !== $newStatus && in_array($newStatus, ['approved', 'completed', 'cancelled', 'rejected'])) {
+            $this->sendAppointmentStatusEmail(
+                ['appointment_at' => $appt['appointment_at'], 'notes' => $appt['notes'] ?? ''],
+                ['make' => $appt['make'], 'model' => $appt['model'], 'variant' => $appt['variant'] ?? '', 'year' => $appt['year']],
+                ['name' => $appt['name'], 'email' => $appt['email']],
+                $newStatus
+            );
         }
 
-        // Perform update
-        $this->db->raw("UPDATE appointments SET status = ? WHERE id = ?", [$input['status'], $id]);
-
-        $this->api->respond([
-            'status' => 'success',
-            'message' => 'Appointment status updated successfully.'
-        ]);
+        return $this->api->respond(['message' => 'Status updated successfully']);
     } catch (Exception $e) {
-        $this->api->respond_error('Failed to update appointment: ' . $e->getMessage(), 500);
+        return $this->api->respond_error('Update failed', 500);
     }
 }
 
@@ -865,6 +1027,172 @@ public function uploadDealerLogo()
     ]);
 }
 
+// Dapat nandito ‘to sa loob ng ApiController class
+private function sendAppointmentStatusEmail($appointmentData, $carInfo, $userInfo, $newStatus)
+{
+    $mail = new PHPMailer(true);
+
+    try {
+        // SMTP Config (same as your working one)
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'johnrheynedamotamares2005@gmail.com';
+        $mail->Password   = 'isebrtolhpyifuhh';
+        $mail->SMTPSecure = 'tls';
+        $mail->Port       = 587;
+        $mail->setFrom('johnrheynedamotamares2005@gmail.com', 'LavaLust Cars');
+        $mail->addAddress($userInfo['email'], $userInfo['name']);
+        $mail->isHTML(true);
+
+        $dateFormatted = date('F j, Y \a\t g:i A', strtotime($appointmentData['appointment_at']));
+
+        // DYNAMIC EMAIL BASED ON STATUS
+        switch (strtolower($newStatus)) {
+            case 'approved':
+                $mail->Subject = "Appointment APPROVED! {$carInfo['make']} {$carInfo['model']}";
+                $mail->Body = "
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;'>
+                    <div style='background: #27ae60; color: white; padding: 30px; text-align: center;'>
+                        <h1>Appointment APPROVED!</h1>
+                    </div>
+                    <div style='padding: 30px; background: #f8f9fa; text-align: center;'>
+                        <p>Congratulations <strong>{$userInfo['name']}</strong>!</p>
+                        <p>Your appointment has been <strong style='color: #27ae60; font-size: 20px;'>APPROVED</strong>!</p>
+                        <p>We’re excited to see you soon!</p>
+                        
+                        <div style='background: white; padding: 25px; border-radius: 10px; margin: 30px 0; border-left: 6px solid #27ae60;'>
+                            <h2>Appointment Details</h2>
+                            <p><strong>Car:</strong> {$carInfo['make']} {$carInfo['model']} {$carInfo['variant']} ({$carInfo['year']})</p>
+                            <p><strong>Date & Time:</strong> {$dateFormatted}</p>
+                            " . (!empty($appointmentData['notes']) ? "<p><strong>Your Notes:</strong><br><em>{$appointmentData['notes']}</em></p>" : "") . "
+                        </div>
+
+                        <a href='http://localhost:5173/my-appointments' style='background:#27ae60;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;'>
+                            View My Appointments
+                        </a>
+                        
+                        <hr style='margin:40px 0; border:1px dashed #ddd;'>
+                        <p style='color:#777;font-size:13px;text-align:center;'>
+                            © " . date('Y') . " LavaLust Cars. See you soon!
+                        </p>
+                    </div>
+                </div>";
+                break;
+
+            case 'completed':
+                $mail->Subject = "Thank You! Appointment Completed";
+                $mail->Body = "
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;'>
+                    <div style='background: #3498db; color: white; padding: 30px; text-align: center;'>
+                        <h1>Thank You for Visiting!</h1>
+                    </div>
+                    <div style='padding: 30px; background: #f8f9fa; text-align: center;'>
+                        <p>Hi <strong>{$userInfo['name']}</strong>,</p>
+                        <p>Your appointment has been marked as <strong style='color: #3498db;'>COMPLETED</strong>.</p>
+                        <p>We hope you had a great experience with us!</p>
+                        
+                        <div style='background: white; padding: 25px; border-radius: 10px; margin: 30px 0;'>
+                            <p><strong>Car:</strong> {$carInfo['make']} {$carInfo['model']}</p>
+                            <p><strong>Date:</strong> {$dateFormatted}</p>
+                        </div>
+
+                        <p>We'd love to see you again!</p>
+                        <a href='http://localhost:5173/' style='background:#3498db;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;'>
+                            Browse More Cars
+                        </a>
+                    </div>
+                </div>";
+                break;
+
+            case 'cancelled':
+            case 'rejected':
+                $statusText = ucfirst($newStatus);
+                $mail->Subject = "Appointment Update: {$statusText}";
+                $mail->Body = "
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;'>
+                    <div style='background: #e74c3c; color: white; padding: 30px; text-align: center;'>
+                        <h1>Appointment {$statusText}</h1>
+                    </div>
+                    <div style='padding: 30px; background: #f8f9fa;'>
+                        <p>Hello <strong>{$userInfo['name']}</strong>,</p>
+                        <p>We're sorry to inform you that your appointment has been <strong style='color: #e74c3c;'>{$statusText}</strong>.</p>
+                        
+                        <div style='background: white; padding: 25px; border-radius: 10px; margin: 25px 0; border-left: 6px solid #e74c3c;'>
+                            <p><strong>Car:</strong> {$carInfo['make']} {$carInfo['model']}</p>
+                            <p><strong>Scheduled:</strong> {$dateFormatted}</p>
+                        </div>
+
+                        <p>You can book another slot anytime.</p>
+                        <a href='http://localhost:5173/cars' style='background:#e74c3c;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;'>
+                            Book Another Appointment
+                        </a>
+                    </div>
+                </div>";
+                break;
+
+            default:
+                return; // No email for 'pending'
+        }
+
+        $mail->send();
+        error_log("Status email ({$newStatus}) sent to: {$userInfo['email']}");
+
+    } catch (Exception $e) {
+        error_log("Status email failed ({$newStatus}): " . $mail->ErrorInfo);
+        // Silent fail — hindi ma-block ang update
+    }
+}
+
+// 1. PARA SA BOOKING LANG (Pending)
+private function sendBookingConfirmationEmail($appointmentData, $carInfo, $userInfo)
+{
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host       = 'smtp.gmail.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = 'johnrheynedamotamares2005@gmail.com';
+        $mail->Password   = 'isebrtolhpyifuhh';
+        $mail->SMTPSecure = 'tls';
+        $mail->Port       = 587;
+        $mail->setFrom('johnrheynedamotamares2005@gmail.com', 'LavaLust Cars');
+        $mail->addAddress($userInfo['email'], $userInfo['name']);
+        $mail->isHTML(true);
+
+        $mail->Subject = "Appointment Request Received – {$carInfo['make']} {$carInfo['model']}";
+
+        $dateFormatted = date('F j, Y \a\t g:i A', strtotime($appointmentData['appointment_at']));
+
+        $mail->Body = "
+        <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;'>
+            <div style='background: #e67e22; color: white; padding: 30px; text-align: center;'>
+                <h1>Appointment Request Received!</h1>
+            </div>
+            <div style='padding: 30px; background: #f8f9fa;'>
+                <p>Hi <strong>{$userInfo['name']}</strong>,</p>
+                <p>Salamat sa pag-book! Your appointment request has been received and is <strong style='color: #e67e22;'>PENDING APPROVAL</strong>.</p>
+                
+                <div style='background: white; padding: 25px; border-radius: 10px; margin: 30px 0; border-left: 6px solid #e67e22;'>
+                    <h2>Appointment Details</h2>
+                    <p><strong>Car:</strong> {$carInfo['make']} {$carInfo['model']} {$carInfo['variant']} ({$carInfo['year']})</p>
+                    <p><strong>Date & Time:</strong> {$dateFormatted}</p>
+                    " . (!empty($appointmentData['notes']) ? "<p><strong>Notes:</strong><br><em>{$appointmentData['notes']}</em></p>" : "") . "
+                </div>
+
+                <p>We will notify you once it's approved!</p>
+                <a href='http://localhost:5173/my-appointments' style='background:#e67e22;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;'>
+                    View My Appointments
+                </a>
+            </div>
+        </div>";
+
+        $mail->send();
+        error_log("Booking confirmation sent to: {$userInfo['email']}");
+    } catch (Exception $e) {
+        error_log("Booking email failed: " . $mail->ErrorInfo);
+    }
+}
 /**
  * Helper: Require Admin Role
  */
@@ -875,5 +1203,6 @@ public function uploadDealerLogo()
 //         $this->api->respond_error('Admin access required', 403);
 //     }
 // }
+
 
 }

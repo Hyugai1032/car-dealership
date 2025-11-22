@@ -11,6 +11,7 @@ import AdminAppoinmentsManagemement from '../views/AdminAppoinmentsManagemement.
 import UserAppointmentPage from '../views/UserAppointments.vue'
 import CarInventory from '../views/pages/CarInventory.vue'
 import Dealers from '../views/pages/Dealers.vue'
+import UserManagement from '../views/pages/UserManagement.vue'
 
 const routes = [
   { path: '/', name: 'dashboard', component: Dashboard },
@@ -22,7 +23,8 @@ const routes = [
   { path: '/appointmentpage', name: 'appointmentpage', component: UserAppointmentPage },
   { path: '/adminappointment', name: 'adminappointment', component: AdminAppoinmentsManagemement },
   { path: '/car-inventory', name: 'car-inventorys', component: CarInventory },
-  { path: '/dealers', name: 'dealer', component: Dealers }
+  { path: '/dealers', name: 'dealer', component: Dealers },
+  { path: '/user-management', name: 'user-management', component: UserManagement }
 ]
 
 const router = createRouter({

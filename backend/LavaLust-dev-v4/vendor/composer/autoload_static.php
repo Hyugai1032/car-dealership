@@ -15,6 +15,10 @@ class ComposerStaticInitcb17ae8311c5ce620ba73efb10f35327
         array (
             'Johnrheytamares\\LavaLustDevV4\\' => 30,
         ),
+        'F' => 
+        array (
+            'Firebase\\JWT\\' => 13,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
@@ -25,6 +29,10 @@ class ComposerStaticInitcb17ae8311c5ce620ba73efb10f35327
         'Johnrheytamares\\LavaLustDevV4\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
+        ),
+        'Firebase\\JWT\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/firebase/php-jwt/src',
         ),
     );
 

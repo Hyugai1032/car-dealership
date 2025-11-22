@@ -44,29 +44,52 @@ defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 */
 
 //$router->get('/', 'Welcome::index');
-$router->post('login', 'ApiController::login');
-$router->post('logout', 'ApiController::logout');
-$router->post('create', 'ApiController::create');
-$router->put('update/{id}', 'ApiController::update');
-$router->delete('delete/{id}', 'ApiController::delete');
-$router->get('list', 'ApiController::list');
-$router->get('profile', 'ApiController::profile');
-$router->post('refresh', 'ApiController::refresh');
-$router->get('listcars', 'ApiController::listCars');
-$router->post('createcars', 'ApiController::createCars');
-$router->put('updatecars/{id}', 'ApiController::updateCars');
-$router->delete('deletecars/{id}', 'ApiController::deleteCars');
-$router->post('/otp', 'ApiController::sendVerificationCode');   // send OTP
-$router->post('/otp/verify', 'ApiController::verifyCode');      // verify OTP
-$router->get('/email', 'ApiController::sendTestEmail');         // test route
+// ===================================================================
+// AUTH & PUBLIC ROUTES
+// ===================================================================
+$router->post('/login', 'ApiController::login');
+$router->post('/logout', 'ApiController::logout');
+$router->post('/refresh', 'ApiController::refresh');
+$router->post('/otp', 'ApiController::sendVerificationCode');
+$router->post('/otp/verify', 'ApiController::verifyCode');
+$router->get('/email', 'ApiController::sendTestEmail'); // test only
+// ===================================================================
+// USER MANAGEMENT — CLEAN SINGULAR ROUTES (PRO LEVEL)
+// ===================================================================
+$router->group('/api/user', function () use ($router) {
+    $router->post('create', 'ApiController::create');
+    $router->get('list', 'ApiController::list');
+    $router->get('profile', 'ApiController::profile');
+    $router->put('update/{id}', 'ApiController::update');
+    $router->delete('delete/{id}', 'ApiController::delete');
+});
+
+// ===================================================================
+// CARS MANAGEMENT
+// ===================================================================
+$router->get('/listcars', 'ApiController::listCars');
+$router->post('/createcars', 'ApiController::createCars');
+$router->put('/updatecars/{id}', 'ApiController::updateCars');
+$router->delete('/deletecars/{id}', 'ApiController::deleteCars');
 $router->get('/searchcars', 'ApiController::listCarsPaginated');
-$router->post('createappointment', 'ApiController::createAppointment');
-$router->get('listappointment', 'ApiController::listAppointments');
-$router->put('updateappointment/{id}', 'ApiController::updateAppointment');
 $router->post('/upload-car-image', 'ApiController::uploadCarImage');
+
+// ===================================================================
+// APPOINTMENTS
+// ===================================================================
+$router->post('/createappointment', 'ApiController::createAppointment');
+$router->get('/listappointment', 'ApiController::listAppointments');
+$router->put('/updateappointment/{id}', 'ApiController::updateAppointment');
+
+// ===================================================================
+// DEALERS MANAGEMENT
+// ===================================================================
+$router->get('/dealers', 'ApiController::listDealers');
+$router->post('/dealers', 'ApiController::createDealer');
+$router->put('/dealers/{id}', 'ApiController::updateDealer');
+$router->delete('/dealers/{id}', 'ApiController::deleteDealer');
+$router->post('/dealers/upload-logo', 'ApiController::uploadDealerLogo');
+// ===================================================================
+// FILES
+// ===================================================================
 $router->get('/download/{filename}', 'ApiController::downloadFile');
-$router->get('/dealers',               'ApiController::listDealers');
-$router->post('/dealers',              'ApiController::createDealer');
-$router->put('/dealers/{id}',          'ApiController::updateDealer');
-$router->delete('/dealers/{id}',       'ApiController::deleteDealer');
-$router->post('/dealers/upload-logo',  'ApiController::uploadDealerLogo');

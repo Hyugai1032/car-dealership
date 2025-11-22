@@ -50,6 +50,11 @@
             <span>Cars Management</span>
             <div v-if="$route.name === 'cars-management'" class="active-indicator"></div>
           </li>
+          <li class="nav-item" :class="{ active: $route.name === 'user-management' }" @click="navigate('user-management')">
+            <i class="fas fa-user-cog"></i>
+            <span>User Management</span>
+            <div v-if="$route.name === 'user-management'" class="active-indicator"></div>
+          </li>
           <li class="nav-item" :class="{ active: $route.name === 'customers' }" @click="navigate('customers')">
             <i class="fas fa-users"></i>
             <span>Customers</span>

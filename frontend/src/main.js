@@ -45,4 +45,10 @@ styleSheet.textContent = styles
 document.head.appendChild(styleSheet)
 
 // Create and mount the app
+<<<<<<< HEAD
 createApp(App).use(router).mount('#app')
+=======
+const app = createApp(App);
+app.use(router);
+app.mount("#app");
+>>>>>>> main

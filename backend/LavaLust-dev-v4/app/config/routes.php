@@ -48,13 +48,14 @@ defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 // AUTH & PUBLIC ROUTES
 // ===================================================================
 $router->post('/login', 'ApiController::login');
-$router->post('/logout', 'ApiController::logout');
+$router->post('/logout', 'AuthController::logout');
 $router->post('/refresh', 'ApiController::refresh');
 $router->post('/otp', 'ApiController::sendVerificationCode');
 $router->post('/otp/verify', 'ApiController::verifyCode');
 $router->get('/email', 'ApiController::sendTestEmail'); // test only
 $router->post('/forgot-password', 'MailController::sendForgotPassword');
 $router->post('/reset-password', 'MailController::resetPassword');
+$router->post('/auth/google', 'AuthController::googleCallback');
 // ===================================================================
 // USER MANAGEMENT — CLEAN SINGULAR ROUTES (PRO LEVEL)
 // ===================================================================

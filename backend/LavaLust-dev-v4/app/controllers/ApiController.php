@@ -35,6 +35,9 @@ class ApiController extends Controller {
             echo "❌ Email could not be sent. Error: {$mail->ErrorInfo}";
         }
     }
+
+
+    
     public function sendVerificationLink() {
     $this->api->require_method('POST');
     $input = $this->api->body();
@@ -1098,7 +1101,7 @@ private function sendAppointmentStatusEmail($appointmentData, $carInfo, $userInf
                         </div>
 
                         <p>We'd love to see you again!</p>
-                        <a href='http://localhost:5173/' style='background:#3498db;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;'>
+                        <a href='http://localhost:5173/cars-page' style='background:#3498db;color:white;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;'>
                             Browse More Cars
                         </a>
                     </div>

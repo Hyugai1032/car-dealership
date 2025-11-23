@@ -60,11 +60,11 @@ $router->post('/auth/google', 'AuthController::googleCallback');
 // USER MANAGEMENT — CLEAN SINGULAR ROUTES (PRO LEVEL)
 // ===================================================================
 $router->group('/api/user', function () use ($router) {
-    $router->post('create', 'ApiController::create');
-    $router->get('list', 'ApiController::list');
-    $router->get('profile', 'ApiController::profile');
-    $router->put('update/{id}', 'ApiController::update');
-    $router->delete('delete/{id}', 'ApiController::delete');
+    $router->post('/create', 'ApiController::create');
+    $router->get('/list', 'ApiController::list');
+    $router->get('/profile', 'ApiController::profile');
+    $router->put('/update/{id}', 'ApiController::update');
+    $router->delete('/delete/{id}', 'ApiController::delete');
 });
 
 // ===================================================================
@@ -76,7 +76,7 @@ $router->put('/updatecars/{id}', 'ApiController::updateCars');
 $router->delete('/deletecars/{id}', 'ApiController::deleteCars');
 $router->get('/searchcars', 'ApiController::listCarsPaginated');
 $router->post('/upload-car-image', 'ApiController::uploadCarImage');
-
+$router->get('/cardistribution', 'ApiController::cardistribution');
 // ===================================================================
 // APPOINTMENTS
 // ===================================================================
@@ -85,7 +85,7 @@ $router->get('/listappointment', 'ApiController::listAppointments');
 $router->put('/updateappointment/{id}', 'ApiController::updateAppointment');
 $router->delete('/deleteappointment/{id}', 'ApiController::deleteAppointment');
 $router->get('/get-booked-dates/{car_id}', 'ApiController::getBookedDates');
-
+$router->get('/dataappointments', 'ApiController::dataappointments');
 // ===================================================================
 // DEALERS MANAGEMENT
 // ===================================================================

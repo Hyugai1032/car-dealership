@@ -245,11 +245,24 @@ const soldCount = computed(() => cars.value.filter(c => c.status === 'sold').len
 const fetchCars = async () => {
   loading.value = true
   try {
-    const res = await fetch('http://localhost:8000/listcars')
+    // GET USER FROM localStorage
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+
+    const res = await fetch('http://localhost:8000/listcars', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User': JSON.stringify(user)  // ← ITO ANG KULANG MO BRO!!!
+      }
+    })
+
     const data = await res.json()
-    if (data.status === 'success') cars.value = data.cars
+    if (data.status === 'success') {
+      cars.value = data.cars || []
+    }
   } catch (err) {
-    alert('Failed to load inventory')
+    console.error('Fetch cars error:', err)
+    notify('Failed to load cars', 'error')
   } finally {
     loading.value = false
   }

@@ -64,13 +64,13 @@
                   <label>Phone (Optional)</label>
                   <input v-model="form.phone" placeholder="+639171234567" />
                 </div>
-                <div class="form-group">
+                <!-- <div class="form-group">
                   <label>Dealer</label>
                   <select v-model="form.dealer_id">
                     <option :value="null">None (Customer)</option>
                     <option v-for="d in dealers" :key="d.id" :value="d.id">{{ d.name }}</option>
                   </select>
-                </div>
+                </div> -->
                 <div class="form-group">
                   <label>Role</label>
                   <select v-model="form.role" required>
@@ -124,8 +124,8 @@
                   <th>Name</th>
                   <th>Email</th>
                   <th>Role</th>
-                  <th>Dealer</th>
-                  <th>Last Login</th>
+                  <!-- <th>Dealer</th>
+                  <th>Last Login</th> -->
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -139,8 +139,8 @@
                       {{ u.role === 'buyer' ? 'Customer' : u.role.toUpperCase() }}
                     </span>
                   </td>
-                  <td>{{ u.dealer_name || '—' }}</td>
-                  <td>{{ u.last_login ? formatDate(u.last_login) : 'Never' }}</td>
+                  <!-- <td>{{ u.dealer_name || '—' }}</td>
+                  <td>{{ u.last_login ? formatDate(u.last_login) : 'Never' }}</td> -->
                   <td class="actions">
                     <button @click="editUser(u)" class="mini-btn edit"><i class="fas fa-edit"></i></button>
                     <button 

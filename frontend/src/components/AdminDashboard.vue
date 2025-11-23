@@ -176,7 +176,7 @@ const stats = reactive([
 
 // ACTIVITIES
 const recentActivities = ref([
-  "User John purchased a Tesla.",
+  "User John purchased a ",
   "New dealer 'MotorMax' registered.",
   "Appointment scheduled for 3PM.",
   "BMW M4 restocked.",

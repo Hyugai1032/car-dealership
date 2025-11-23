@@ -272,7 +272,7 @@ export default {
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        const response = await fetch('http://localhost:8000/create', {
+        const response = await fetch('http://localhost:8000/api/user/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -236,11 +236,24 @@ const carDisplay = computed(() => selectedAppointment.value.make && selectedAppo
 const fetchAppointments = async () => {
   loading.value = true
   try {
-    const res = await fetch('http://localhost:8000/listappointment')
+    // GET USER FROM localStorage
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+
+    const res = await fetch('http://localhost:8000/listappointment', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User': JSON.stringify(user)  // ← ITO ANG KULANG MO BRO!!!
+      }
+    })
+
     const data = await res.json()
-    appointments.value = data.appointments || []
+    if (data.status === 'success') {
+      cars.value = data.cars || []
+    }
   } catch (err) {
-    console.error(err)
+    console.error('Fetch cars error:', err)
+    notify('Failed to load cars', 'error')
   } finally {
     loading.value = false
   }
@@ -270,7 +283,10 @@ const updateAppointment = async () => {
 
     const res = await fetch(`http://localhost:8000/updateappointment/${selectedAppointment.value.id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User': JSON.stringify(user)  // ← ITO ANG KULANG MO BRO!!!
+      },
       body: JSON.stringify(payload)
     })
 

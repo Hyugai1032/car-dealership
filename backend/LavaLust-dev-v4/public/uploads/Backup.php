@@ -6,31 +6,162 @@ use PHPMailer\PHPMailer\Exception;
 class ApiController extends Controller {
     private $user_id;
 
-    // ===================================================================
-    // HELPER: Kunin ang current user mula sa localStorage via X-User header
-    // ===================================================================
-    private function getCurrentUser() {
-        $headers = getallheaders();
-        $userHeader = $headers['X-User'] ?? $headers['x-user'] ?? '';
+    public function sendTestEmail() {
+        $mail = new PHPMailer(true);
 
-        if ($userHeader) {
-            $userData = json_decode($userHeader, true);
-            if (is_array($userData)) {
-                return [
-                    'id'        => $userData['id'] ?? null,
-                    'role'      => $userData['role'] ?? 'buyer',
-                    'dealer_id' => $userData['dealer_id'] ?? null,
-                    'name'      => $userData['name'] ?? 'User'
-                ];
-            }
+        try {
+            // Gmail SMTP configuration
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = 'johnrheynedamotamares2005@gmail.com';           // your Gmail address
+            $mail->Password   = 'isebrtolhpyifuhh';              // Gmail app password
+            $mail->SMTPSecure = 'tls';                            // encryption
+            $mail->Port       = 587;
+
+            // Sender and recipient
+            $mail->setFrom('johnrheynedamotamares2005@gmail.com', 'LavaLust Test');
+            $mail->addAddress('johnrheynedamotamares2005@gmail.com', 'Recipient Name');
+
+            // Email content
+            $mail->isHTML(true);
+            $mail->Subject = 'Gmail SMTP Test';
+            $mail->Body    = 'Location: http://localhost:5173/';
+
+            // Send it
+            $mail->send();
+            echo '✅ Email sent successfully!';
+        } catch (Exception $e) {
+            echo "❌ Email could not be sent. Error: {$mail->ErrorInfo}";
         }
-        // Fallback: admin (safe for testing)
-        return ['id' => null, 'role' => 'admin', 'dealer_id' => null];
     }
 
-        // ===================================================================
-    // LOGIN — Save user to localStorage (Vue will handle)
-    // ===================================================================
+
+    
+    public function sendVerificationLink() {
+    $this->api->require_method('POST');
+    $input = $this->api->body();
+    $email = trim($input['email'] ?? '');
+
+    if (empty($email)) {
+        return $this->api->respond_error('Email is required', 400);
+    }
+
+    // Prevent registration if already exists
+    $stmt = $this->db->raw("SELECT id FROM users WHERE email = ?", [$email]);
+    if ($stmt->fetch()) {
+        return $this->api->respond_error('Email already registered', 400);
+    }
+
+    // Rate limiting
+    $stmt = $this->db->raw("SELECT send_count, last_sent_at FROM email_verifications WHERE email = ? LIMIT 1", [$email]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $now = time();
+
+    if ($row) {
+        $last = $row['last_sent_at'] ? strtotime($row['last_sent_at']) : 0;
+
+        if ($now - $last < 60) {
+            return $this->api->respond_error('Please wait before requesting another link', 429);
+        }
+
+        if ($row['send_count'] >= 5 && ($now - $last) < 3600) {
+            return $this->api->respond_error('Too many attempts; try again later', 429);
+        }
+    }
+
+    // Generate a secure token
+    $token = bin2hex(random_bytes(32));
+    $expires_at = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+
+    if ($row) {
+        $this->db->raw(
+            "UPDATE email_verifications SET token=?, expires_at=?, created_at=NOW(), last_sent_at=NOW(), send_count = send_count + 1 WHERE email=?",
+            [$token, $expires_at, $email]
+        );
+    } else {
+        $this->db->raw(
+            "INSERT INTO email_verifications (email, token, expires_at, created_at, last_sent_at, send_count) VALUES (?, ?, ?, NOW(), NOW(), 1)",
+            [$email, $token, $expires_at]
+        );
+    }
+
+    // Send email with PHPMailer
+    require_once __DIR__ . '/../../../vendor/autoload.php';
+    $config = require __DIR__ . '/../../../app/config/email.php';
+    $verificationLink = "https://yourdomain.com/api/verify-link?token=$token";
+
+    $mail = new PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host = $config['host'];
+        $mail->SMTPAuth = true;
+        $mail->Username = $config['username'];
+        $mail->Password = $config['password'];
+        $mail->SMTPSecure = $config['encryption'];
+        $mail->Port = $config['port'];
+
+        $mail->setFrom($config['from_email'], $config['from_name']);
+        $mail->addAddress($email);
+
+        $mail->isHTML(true);
+        $mail->Subject = 'Verify Your Email';
+        $mail->Body = "
+            <p>Hello,</p>
+            <p>Click the link below to verify your email and access the dashboard:</p>
+            <a href='$verificationLink' style='font-size:18px;'>Verify Email</a>
+            <p>This link will expire in 10 minutes.</p>
+            <p>If you didn’t request this, ignore this email.</p>
+        ";
+
+        $mail->send();
+        return $this->api->respond(['message' => 'Verification link sent successfully']);
+    } catch (Exception $e) {
+        error_log('Mailer Error: ' . $mail->ErrorInfo);
+        return $this->api->respond_error('Failed to send verification email: ' . $mail->ErrorInfo, 500);
+    }
+    }
+
+    public function verifyLink() {
+    $token = $_GET['token'] ?? '';
+    if (!$token) {
+        return $this->api->respond_error('Invalid link', 400);
+    }
+
+    $stmt = $this->db->raw("SELECT * FROM email_verifications WHERE token = ? LIMIT 1", [$token]);
+    $verification = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$verification) {
+        return $this->api->respond_error('Invalid or expired link', 400);
+    }
+
+    if (strtotime($verification['expires_at']) < time()) {
+        $this->db->raw("DELETE FROM email_verifications WHERE token = ?", [$token]);
+        return $this->api->respond_error('Link expired', 400);
+    }
+
+    $email = $verification['email'];
+
+    // Automatically create user (or mark as verified if already exists)
+    $stmt = $this->db->raw("SELECT * FROM users WHERE email = ?", [$email]);
+    if (!$stmt->fetch()) {
+        // Replace these with actual user details if available
+        $this->db->raw(
+            "INSERT INTO users (role, name, email, password_hash, created_at)
+             VALUES (?, ?, ?, ?, NOW())",
+            ['user', 'Default Name', $email, password_hash('defaultpass', PASSWORD_BCRYPT)]
+        );
+    }
+
+    // Remove token after verification
+    $this->db->raw("DELETE FROM email_verifications WHERE token = ?", [$token]);
+
+    // Redirect to dashboard
+    header('Location: http://localhost:8000/dashboard');
+    exit;
+    }
+
+
 
 public function login() {
     $this->api->require_method('POST');
@@ -42,28 +173,32 @@ public function login() {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user && password_verify($password, $user['password_hash'])) {
-        $this->api->respond([
-                'status' => 'success',
-                'user' => [
-                    'id'        => $user['id'],
-                    'name'      => $user['name'],
-                    'email'     => $user['email'],
-                    'role'      => $user['role'],
-                    'dealer_id' => $user['dealer_id'] ?? null
-                ]
-        ]);
+        $tokens = $this->api->issue_tokens(['id' => $user['id'], 'role' => $user['role']]);
+        
+        // Add user info to the response
+        $this->api->respond(array_merge($tokens, [
+            'user' => [
+                'id'        => $user['id'],
+                'name'      => $user['name'],
+                'email'     => $user['email'],
+                'role'      => $user['role'],
+                'dealer_id' => $user['dealer_id']
+            ]
+        ]));
     } else {
         $this->api->respond_error('Invalid credentials', 401);
     }
 }
 
+
     public function logout() {
         $this->api->require_method('POST');
-        $this->api->respond(['message' => 'Logged out successfully']);
+        $input = $this->api->body();
+        $token = $input['refresh_token'] ?? '';
+        $this->api->revoke_refresh_token($token);
+        $this->api->respond(['message' => 'Logged out']);
     }
 
-
-    
     public function list() {
         $stmt = $this->db->table('users')
                          ->select('id, role, name, email, phone, dealer_id, created_at')
@@ -96,27 +231,33 @@ public function login() {
     }
 
 
-        public function createCars() {
-                $user = $this->getCurrentUser();
-                $input = $this->api->body();
+    public function createCars() {
+        $input = $this->api->body();
 
-                $dealer_id = ($user['role'] === 'dealer') ? $user['dealer_id'] : ($input['dealer_id'] ?? 1);
+        $this->db->raw(
+            "INSERT INTO cars (dealer_id, make, model, variant, year, type, price, mileage, fuel_type, transmission, color, main_image, description, warranty_id, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                $input['dealer_id'],
+                $input['make'],
+                $input['model'],
+                $input['variant'],
+                $input['year'],
+                $input['type'],
+                $input['price'] ?? null,
+                $input['mileage'] ?? null,
+                $input['fuel_type'] ?? null,
+                $input['transmission'] ?? null,
+                $input['color'] ?? null,
+                $input['main_image'] ?? null,
+                $input['description'] ?? null,
+                $input['warranty_id'] ?? null,
+                $input['status'] ?? 'available'
+            ]
+        );
 
-                $this->db->raw("INSERT INTO cars 
-                    (dealer_id, make, model, variant, year, type, price, mileage, fuel_type, 
-                    transmission, color, main_image, description, warranty_id, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
-                    $dealer_id,
-                    $input['make'], $input['model'], $input['variant'], $input['year'],
-                    $input['type'], $input['price'] ?? null, $input['mileage'] ?? null,
-                    $input['fuel_type'] ?? null, $input['transmission'] ?? null,
-                    $input['color'] ?? null, $input['main_image'] ?? null,
-                    $input['description'] ?? null, $input['warranty_id'] ?? null,
-                    $input['status'] ?? 'available'
-                ]);
-
-                $this->api->respond(['status' => 'success', 'message' => 'Car added successfully']);
-            }
+        $this->api->respond(['message' => 'Car created']);
+    }
 
 
     public function update($id) {
@@ -227,66 +368,71 @@ public function getBookedDates($car_id)
     }
     }    
 
-    // ===================================================================
-    // CARS MANAGEMENT — Dealer sees & edits only his cars
-    // ===================================================================
+    
     public function listCars() {
-        $user = $this->getCurrentUser();
-        $sql = "SELECT id, dealer_id, make, model, variant, year, type, price, mileage, 
-                       fuel_type, transmission, color, main_image, description, warranty_id, status 
-                FROM cars";
+        try {
+            // Query all cars with the specified fields
+            $cars = $this->db->table('cars')
+                            ->select('id, dealer_id, make, model, variant, year, type, price, mileage, fuel_type, transmission, color, main_image, description, warranty_id, status')
+                            ->get_all();
 
-        if ($user['role'] === 'dealer' && $user['dealer_id']) {
-            $sql .= " WHERE dealer_id = " . (int)$user['dealer_id'];
+            // Respond with the result in JSON format
+            $this->api->respond([
+                'status' => 'success',
+                'cars' => $cars
+            ]);
+        } catch (Exception $e) {
+            // Catch any errors and respond properly
+            $this->api->respond([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ]);
         }
-
-        $cars = $this->db->raw($sql)->fetchAll(PDO::FETCH_ASSOC);
-
-        $this->api->respond([
-            'status' => 'success',
-            'cars' => $cars
-        ]);
     }
 
 
-public function updateCars($id) {
-        $user = $this->getCurrentUser();
-        $input = $this->api->body();
+        public function updateCars($id) {
+            $input = $this->api->body();
 
-        if ($user['role'] === 'dealer') {
-            $car = $this->db->raw("SELECT dealer_id FROM cars WHERE id = ?", [$id])->fetch();
-            if (!$car || $car['dealer_id'] != $user['dealer_id']) {
-                return $this->api->respond_error('Access denied: You can only edit your own cars', 403);
+            try {
+                $this->db->raw(
+                    "UPDATE cars SET dealer_id=?, make=?, model=?, variant=?, year=?, type=?, price=?, mileage=?, fuel_type=?, transmission=?, color=?, main_image=?, description=?, warranty_id=?, status=? WHERE id=?",
+                    [
+                        $input['dealer_id'], $input['make'], $input['model'], $input['variant'],
+                        $input['year'], $input['type'], $input['price'], $input['mileage'],
+                        $input['fuel_type'], $input['transmission'], $input['color'],
+                        $input['main_image'], $input['description'], $input['warranty_id'],
+                        $input['status'], $id
+                    ]
+                );
+
+                $this->api->respond([
+                    'status' => 'success',
+                    'message' => 'Car updated successfully'
+                ]);
+            } catch (Exception $e) {
+                $this->api->respond([
+                    'status' => 'error',
+                    'message' => $e->getMessage()
+                ]);
             }
         }
 
-        $dealer_id = ($user['role'] === 'dealer') ? $user['dealer_id'] : ($input['dealer_id'] ?? null);
 
-        $this->db->raw("UPDATE cars SET 
-            dealer_id = ?, make = ?, model = ?, variant = ?, year = ?, type = ?, price = ?, 
-            mileage = ?, fuel_type = ?, transmission = ?, color = ?, main_image = ?, 
-            description = ?, warranty_id = ?, status = ? WHERE id = ?", [
-            $dealer_id, $input['make'], $input['model'], $input['variant'], $input['year'],
-            $input['type'], $input['price'], $input['mileage'], $input['fuel_type'],
-            $input['transmission'], $input['color'], $input['main_image'],
-            $input['description'], $input['warranty_id'], $input['status'], $id
-        ]);
-
-        $this->api->respond(['status' => 'success', 'message' => 'Car updated successfully']);
-    }
-
-
-    public function deleteCars($id) {
-        $user = $this->getCurrentUser();
-        if ($user['role'] === 'dealer') {
-            $car = $this->db->raw("SELECT dealer_id FROM cars WHERE id = ?", [$id])->fetch();
-            if (!$car || $car['dealer_id'] != $user['dealer_id']) {
-                return $this->api->respond_error('Access denied', 403);
+        public function deleteCars($id) {
+            try {
+                $this->db->table('cars')->where('id', $id)->delete();
+                $this->api->respond([
+                    'status' => 'success',
+                    'message' => 'Car deleted successfully'
+                ]);
+            } catch (Exception $e) {
+                $this->api->respond([
+                    'status' => 'error',
+                    'message' => $e->getMessage()
+                ]);
             }
         }
-        $this->db->table('cars')->where('id', $id)->delete();
-        $this->api->respond(['status' => 'success', 'message' => 'Car deleted']);
-    }
 
 
     public function delete($id) {
@@ -312,66 +458,137 @@ public function updateCars($id) {
         $this->api->refresh_access_token($refresh_token);
     }
 
-        public function listCarsPaginated() {
-        $user = $this->getCurrentUser();
-        $page = max(1, (int)($_GET['page'] ?? 1));
-        $limit = max(1, min(50, (int)($_GET['limit'] ?? 10)));
+    public function listCarsPaginated() {
+    try {
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 10;
         $offset = ($page - 1) * $limit;
 
-        $where = []; $params = [];
+        // Input filters
+        $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+        $make = isset($_GET['make']) ? trim($_GET['make']) : '';
+        $year = isset($_GET['year']) ? trim($_GET['year']) : '';
+        $minPrice = isset($_GET['minPrice']) && $_GET['minPrice'] !== '' ? (int)$_GET['minPrice'] : null;
+        $maxPrice = isset($_GET['maxPrice']) && $_GET['maxPrice'] !== '' ? (int)$_GET['maxPrice'] : null;
+        $transmission = isset($_GET['transmission']) ? trim($_GET['transmission']) : '';
+        // fuelTypes can be sent as comma-separated e.g. "Gasoline,Electric"
+        $fuelTypesRaw = isset($_GET['fuelTypes']) ? trim($_GET['fuelTypes']) : '';
+        $fuelTypes = $fuelTypesRaw !== '' ? array_map('trim', explode(',', $fuelTypesRaw)) : [];
 
-        if (!empty($_GET['search'])) {
-            $s = "%" . trim($_GET['search']) . "%";
-            $where[] = "(make LIKE ? OR model LIKE ? OR variant LIKE ? OR color LIKE ?)";
-            $params = array_merge($params, [$s, $s, $s, $s]);
+        $where = [];
+        $params = [];
+
+        // Search: apply across multiple text fields
+        if ($search !== '') {
+            $searchTerm = '%' . $search . '%';
+            $where[] = "(make LIKE ? OR model LIKE ? OR variant LIKE ? OR CAST(year AS CHAR) LIKE ? OR type LIKE ? OR CAST(price AS CHAR) LIKE ? OR CAST(mileage AS CHAR) LIKE ? OR fuel_type LIKE ? OR transmission LIKE ? OR color LIKE ? OR description LIKE ? OR status LIKE ?)";
+            // push 12 copies of searchTerm matching the number of LIKEs above
+            for ($i = 0; $i < 12; $i++) $params[] = $searchTerm;
         }
-        if (!empty($_GET['make'])) { $where[] = "make = ?"; $params[] = $_GET['make']; }
-        if (!empty($_GET['year'])) { $where[] = "year = ?"; $params[] = $_GET['year']; }
-        if ($_GET['minPrice'] !== '') { $where[] = "price >= ?"; $params[] = (int)$_GET['minPrice']; }
-        if ($_GET['maxPrice'] !== '') { $where[] = "price <= ?"; $params[] = (int)$_GET['maxPrice']; }
 
-        if ($user['role'] === 'dealer' && $user['dealer_id']) {
-            $where[] = "dealer_id = ?";
-            $params[] = $user['dealer_id'];
+        if ($make !== '') {
+            $where[] = "make = ?";
+            $params[] = $make;
         }
 
-        $whereSql = !empty($where) ? 'WHERE ' . implode(' AND ', $where) : '';
-        $sql = "SELECT id, dealer_id, make, model, variant, year, type, price, mileage, 
-                       fuel_type, transmission, color, main_image, description, warranty_id, status 
-                FROM cars $whereSql ORDER BY id DESC LIMIT ? OFFSET ?";
-        $params[] = $limit; $params[] = $offset;
+        if ($year !== '') {
+            $where[] = "year = ?";
+            $params[] = $year;
+        }
 
-        $cars = $this->db->raw($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
-        $total = $this->db->raw("SELECT COUNT(*) FROM cars $whereSql", array_slice($params, 0, -2))->fetchColumn();
+        if ($minPrice !== null) {
+            $where[] = "price >= ?";
+            $params[] = $minPrice;
+        }
+
+        if ($maxPrice !== null) {
+            $where[] = "price <= ?";
+            $params[] = $maxPrice;
+        }
+
+        if ($transmission !== '') {
+            $where[] = "transmission = ?";
+            $params[] = $transmission;
+        }
+
+        if (!empty($fuelTypes)) {
+            // create placeholders for IN clause
+            $placeholders = implode(',', array_fill(0, count($fuelTypes), '?'));
+            $where[] = "fuel_type IN ($placeholders)";
+            foreach ($fuelTypes as $ft) $params[] = $ft;
+        }
+
+        // Build WHERE clause
+        $whereSql = '';
+        if (!empty($where)) {
+            $whereSql = ' WHERE ' . implode(' AND ', $where);
+        }
+
+        // Fetch rows with pagination (use ORDER BY for deterministic results)
+        $sql = "SELECT id, dealer_id, make, model, variant, year, type, price, mileage, fuel_type, transmission, color, main_image, description, warranty_id, status
+                FROM cars
+                $whereSql
+                ORDER BY id DESC
+                LIMIT ? OFFSET ?";
+
+        // Append pagination params
+        $params_for_query = array_merge($params, [$limit, $offset]);
+
+        $stmt = $this->db->raw($sql, $params_for_query);
+        $cars = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Count total matching records for pagination (reuse same WHERE)
+        $countSql = "SELECT COUNT(*) AS total FROM cars $whereSql";
+        $countStmt = $this->db->raw($countSql, $params);
+        $total = (int)$countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        // Build response
+        $response = [
+            "status" => "success",
+            "cars" => $cars,
+            "pagination" => [
+                "page" => $page,
+                "limit" => $limit,
+                "total_records" => $total,
+                "total_pages" => $total > 0 ? (int)ceil($total / $limit) : 1
+            ]
+        ];
+
+        $this->api->respond($response);
+
+    } catch (Exception $e) {
+        $this->api->respond([
+            "status" => "error",
+            "message" => $e->getMessage()
+        ]);
+    }
+}
+
+public function cardistribution()
+{
+    $this->api->require_method('GET');
+
+    try {
+        $stocks = $this->db->raw("
+            SELECT 
+                cars.make,
+                cars.model,
+                cars.variant,
+                COUNT(*) AS stock_count
+            FROM cars
+            WHERE status = 'available'
+            GROUP BY cars.make, cars.model, cars.variant
+            ORDER BY cars.make, cars.model
+        ")->fetchAll();
 
         $this->api->respond([
             'status' => 'success',
-            'cars' => $cars,
-            'pagination' => [
-                'page' => $page,
-                'limit' => $limit,
-                'total_records' => (int)$total,
-                'total_pages' => ceil($total / $limit)
-            ]
+            'stocks' => $stocks
         ]);
+    } catch (Exception $e) {
+        $this->api->respond_error("Failed to fetch car stock summary: " . $e->getMessage(), 500);
     }
-
-    // ===================================================================
-    // DASHBOARD CHARTS: Dealer sees only his data
-    // ===================================================================
-    public function cardistribution() {
-        $user = $this->getCurrentUser();
-        $sql = "SELECT make, model, variant, COUNT(*) AS stock_count 
-                FROM cars WHERE status = 'available'";
-
-        if ($user['role'] === 'dealer' && $user['dealer_id']) {
-            $sql .= " AND dealer_id = " . (int)$user['dealer_id'];
-        }
-        $sql .= " GROUP BY make, model, variant ORDER BY make, model";
-
-        $stocks = $this->db->raw($sql)->fetchAll(PDO::FETCH_ASSOC);
-        $this->api->respond(['status' => 'success', 'stocks' => $stocks]);
-    }
+}
 
 
 
@@ -466,53 +683,61 @@ public function createAppointment()
     }
 }
 
- public function dataappointments() {
-        $user = $this->getCurrentUser();
-        $year  = $_GET['year']  ?? date('Y');
-        $month = $_GET['month'] ?? date('m');
+public function dataappointments()
+{
+    $this->api->require_method('GET');
 
-        $sql = "SELECT c.make, c.model, c.variant, COUNT(a.id) AS total_appointments
-                FROM cars c
-                LEFT JOIN appointments a ON a.car_id = c.id 
-                    AND YEAR(a.appointment_at) = ? AND MONTH(a.appointment_at) = ?";
+    // GET ?year=2025&month=01
+    $year  = $_GET['year']  ?? date('Y');
+    $month = $_GET['month'] ?? date('m');
 
-        $params = [$year, $month];
-        if ($user['role'] === 'dealer' && $user['dealer_id']) {
-            $sql .= " AND a.dealer_id = ?";
-            $params[] = $user['dealer_id'];
-        }
-        $sql .= " GROUP BY c.make, c.model, c.variant ORDER BY c.make, c.model";
+    try {
+        $data = $this->db->raw("
+            SELECT 
+                cars.make,
+                cars.model,
+                cars.variant,
+                COUNT(appointments.id) AS total_appointments
+            FROM cars
+            LEFT JOIN appointments
+                ON appointments.car_id = cars.id
+                AND YEAR(appointments.appointment_at) = ?
+                AND MONTH(appointments.appointment_at) = ?
+            GROUP BY cars.make, cars.model, cars.variant
+            ORDER BY cars.make, cars.model
+        ", [$year, $month])->fetchAll();
 
-        $data = $this->db->raw($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
-        $this->api->respond(['status' => 'success', 'data' => $data]);
+        $this->api->respond([
+            'status' => 'success',
+            'month' => "$year-$month",
+            'data' => $data
+        ]);
+
+    } catch (Exception $e) {
+        $this->api->respond_error("Failed to fetch monthly appointment data: " . $e->getMessage(), 500);
     }
+}
 
 
-    // ===================================================================
-    // APPOINTMENTS: Dealer sees only his appointments
-    // ===================================================================
-    public function listAppointments() {
-        $user = $this->getCurrentUser();
+public function listAppointments()
+{
+    $this->api->require_method('GET');
 
-        $sql = "SELECT a.id, u.name AS user_name, u.email, u.phone, c.make, c.model, 
-                       a.appointment_at, a.status, a.notes
-                FROM appointments a
-                JOIN users u ON a.user_id = u.id
-                JOIN cars c ON a.car_id = c.id";
-
-        $params = [];
-        if ($user['role'] === 'dealer' && $user['dealer_id']) {
-            $sql .= " WHERE a.dealer_id = ?";
-            $params[] = $user['dealer_id'];
-        }
-
-        $appointments = $this->db->raw($sql, $params)->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        $appointments = $this->db->table('appointments')
+            ->select('appointments.id, users.name AS user_name, users.email, users.phone, cars.make, cars.model, appointments.appointment_at, appointments.status, appointments.notes')
+            ->join('users', 'appointments.user_id = users.id')
+            ->join('cars', 'appointments.car_id = cars.id')
+            ->get_all();
 
         $this->api->respond([
             'status' => 'success',
             'appointments' => $appointments
         ]);
+    } catch (Exception $e) {
+        $this->api->respond_error('Failed to fetch appointments: ' . $e->getMessage(), 500);
     }
+}
 
 public function updateAppointment($id)
 {

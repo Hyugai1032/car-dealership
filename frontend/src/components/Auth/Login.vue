@@ -185,53 +185,51 @@ async processGoogleLogin(token) {
   if (data.success) {
     localStorage.setItem('user', JSON.stringify(data.user));
     localStorage.setItem('logged_in', 'true');
-    this.$router.push('/cars-page');
+    this.$router.push('/dashboard');
   } else {
     alert('Login failed: ' + data.error);
   }
 },
 
     // ===================== EMAIL/PASSWORD LOGIN =====================
-    async handleLogin() {
+        async handleLogin() {
       if (!this.email || !this.password) {
-        this.errorMessage = 'Please fill in all fields'
-        return
+        this.errorMessage = 'Please fill in all fields';
+        return;
       }
 
-      this.isLoading = true
-      this.errorMessage = ''
+      this.isLoading = true;
+      this.errorMessage = '';
 
       try {
         const response = await fetch('http://localhost:8000/login', {
           method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify({
-            username: this.email,   // accepts email or username
-            password: this.password
-          })
-        })
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({ email: this.email, password: this.password })
+        });
 
-        const data = await response.json()
+        const data = await response.json();
 
-        if (response.ok && data.success) {
-          localStorage.setItem('user', JSON.stringify(data.user))
-          localStorage.setItem('logged_in', 'true')
-          this.successMessage = 'Login successful! Redirecting...'
-          setTimeout(() => this.$router.push('/'), 800)
+        if (response.ok && data.status === 'success') {
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('logged_in', 'true');
+
+          // Emit event so sidebar updates immediately
+          window.dispatchEvent(new CustomEvent('user-logged-in', { detail: data.user }));
+
+          this.successMessage = 'Login successful! Redirecting...';
+          setTimeout(() => this.$router.push('/dashboard'), 800);
         } else {
-          this.errorMessage = data.message || 'Invalid email/username or password'
+          this.errorMessage = data.message || 'Invalid email/username or password';
         }
       } catch (err) {
-        console.error(err)
-        this.errorMessage = 'Server not responding. Check if backend is running on http://localhost/ridezone'
+        console.error(err);
+        this.errorMessage = 'Server not responding. Check if backend is running.';
       } finally {
-        this.isLoading = false
+        this.isLoading = false;
       }
     }
+
   }
 }
 </script>

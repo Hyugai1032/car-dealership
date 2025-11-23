@@ -15,7 +15,7 @@ import UserManagement from '../views/pages/UserManagement.vue'
 import CarComparison from '../views/pages/CarComparison.vue'
 
 const routes = [
-  { path: '/', name: 'dashboard', component: Dashboard },
+  { path: '/dashboard', name: 'dashboards', component: Dashboard },
   { path: '/login', name: 'login', component: Login },
   { path: '/register', name: 'registration', component: Registration },
   { path: '/cars-management', name: 'cars-management', component: CarsManagement },

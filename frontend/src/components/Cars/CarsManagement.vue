@@ -51,86 +51,73 @@
                 <div class="form-grid">
                   <!-- Basic Information -->
                   <div class="form-group">
-                    <label class="form-label"><i class="fas fa-store"></i> Dealer ID</label>
-                    <input v-model="form.dealer_id" type="number" required class="form-input" placeholder="Enter dealer ID" />
-                    <div class="form-focus-line"></div>
+                    <label class="form-label">Dealer ID</label>
+                    <input v-model.number="form.dealer_id" type="number" required class="form-input" placeholder="Enter dealer ID" />
                   </div>
 
                   <div class="form-group">
-                    <label class="form-label"><i class="fas fa-tag"></i> Make</label>
+                    <label class="form-label">Make</label>
                     <input v-model="form.make" required class="form-input" placeholder="e.g., Toyota, BMW" />
-                    <div class="form-focus-line"></div>
                   </div>
 
                   <div class="form-group">
-                    <label class="form-label"><i class="fas fa-car"></i> Model</label>
+                    <label class="form-label">Model</label>
                     <input v-model="form.model" required class="form-input" placeholder="e.g., Camry, X5" />
-                    <div class="form-focus-line"></div>
                   </div>
 
                   <div class="form-group">
-                    <label class="form-label"><i class="fas fa-cogs"></i> Variant</label>
+                    <label class="form-label">Variant</label>
                     <input v-model="form.variant" class="form-input" placeholder="e.g., Hybrid, Sport" />
-                    <div class="form-focus-line"></div>
                   </div>
 
                   <div class="form-group">
-                    <label class="form-label"><i class="fas fa-calendar"></i> Year</label>
-                    <input v-model="form.year" type="number" required class="form-input" placeholder="e.g., 2023" />
-                    <div class="form-focus-line"></div>
+                    <label class="form-label">Year</label>
+                    <input v-model.number="form.year" type="number" required class="form-input" placeholder="e.g., 2023" />
                   </div>
 
                   <div class="form-group">
-                    <label class="form-label"><i class="fas fa-car-side"></i> Type</label>
+                    <label class="form-label">Type</label>
                     <input v-model="form.type" class="form-input" placeholder="e.g., SUV, Sedan" />
-                    <div class="form-focus-line"></div>
                   </div>
 
                   <!-- Pricing and Specs -->
                   <div class="form-group">
-                    <label class="form-label"><i class="fas fa-dollar-sign"></i> Price</label>
-                    <input v-model="form.price" type="number" class="form-input" placeholder="Enter price" />
-                    <div class="form-focus-line"></div>
+                    <label class="form-label">Price</label>
+                    <input v-model.number="form.price" type="number" class="form-input" placeholder="Enter price in ₱" />
                   </div>
 
                   <div class="form-group">
-                    <label class="form-label"><i class="fas fa-tachometer-alt"></i> Mileage</label>
-                    <input v-model="form.mileage" type="number" class="form-input" placeholder="km" />
-                    <div class="form-focus-line"></div>
+                    <label class="form-label">Mileage (km)</label>
+                    <input v-model.number="form.mileage" type="number" class="form-input" placeholder="e.g., 25000" />
                   </div>
 
                   <div class="form-group">
-                    <label class="form-label"><i class="fas fa-gas-pump"></i> Fuel Type</label>
-                    <input v-model="form.fuel_type" class="form-input" placeholder="Petrol, Diesel, etc." />
-                    <div class="form-focus-line"></div>
+                    <label class="form-label">Fuel Type</label>
+                    <input v-model="form.fuel_type" class="form-input" placeholder="Petrol, Diesel, Electric" />
                   </div>
 
                   <div class="form-group">
-                    <label class="form-label"><i class="fas fa-cog"></i> Transmission</label>
-                    <input v-model="form.transmission" class="form-input" placeholder="Manual, Auto" />
-                    <div class="form-focus-line"></div>
+                    <label class="form-label">Transmission</label>
+                    <input v-model="form.transmission" class="form-input" placeholder="Manual, Automatic" />
                   </div>
 
                   <div class="form-group">
-                    <label class="form-label"><i class="fas fa-palette"></i> Color</label>
-                    <input v-model="form.color" class="form-input" placeholder="e.g., Red, Black" />
-                    <div class="form-focus-line"></div>
+                    <label class="form-label">Color</label>
+                    <input v-model="form.color" class="form-input" placeholder="e.g., Red, Pearl White" />
                   </div>
 
                   <!-- Media Section -->
                   <div class="form-group full-width">
-                    <label class="form-label"><i class="fas fa-upload"></i> Upload Main Image</label>
+                    <label class="form-label">Upload Main Image</label>
 
-                    <!-- Hidden file input -->
                     <input
                       ref="imageInput"
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/jpg,image/png"
                       @change="handleImageUpload"
                       style="display: none"
                     />
 
-                    <!-- Clickable preview area -->
                     <div
                       class="image-upload-box"
                       @click="$refs.imageInput.click()"
@@ -138,51 +125,41 @@
                     >
                       <div v-if="!previewImage" class="upload-placeholder">
                         <i class="fas fa-cloud-upload-alt"></i>
-                        <p>Click to upload image (Max 2MB)</p>
+                        <p>Click to upload image (Max 2MB • JPG/PNG)</p>
                       </div>
-                      <img v-else :src="previewImage" alt="Car preview" class="preview-img" />
+                      <img v-else :src="previewImage" alt="Preview" class="preview-img" />
                     </div>
 
                     <div class="form-hint">
-                      {{ form.main_image ? 'Image ready (click to change)' : 'No image selected' }}
+                      {{ form.main_image ? 'Image ready ✓' : 'No image selected' }}
                     </div>
                   </div>
 
                   <!-- Description -->
                   <div class="form-group full-width">
-                    <label class="form-label"><i class="fas fa-align-left"></i> Description</label>
-                    <textarea v-model="form.description" class="form-textarea" placeholder="Enter vehicle description"></textarea>
-                    <div class="form-focus-line"></div>
+                    <label class="form-label">Description</label>
+                    <textarea v-model="form.description" class="form-textarea" rows="4" placeholder="Describe the vehicle features, condition, etc."></textarea>
                   </div>
 
-                  <!-- Warranty and Status -->
+                  <!-- Status -->
                   <div class="form-group">
-                    <label class="form-label"><i class="fas fa-shield-alt"></i> Warranty ID</label>
-                    <input v-model="form.warranty_id" type="number" class="form-input" placeholder="Optional" />
-                    <div class="form-focus-line"></div>
-                  </div>
-
-                  <div class="form-group">
-                    <label class="form-label"><i class="fas fa-info-circle"></i> Status</label>
+                    <label class="form-label">Status</label>
                     <select v-model="form.status" class="form-input">
                       <option value="available">Available</option>
                       <option value="reserved">Reserved</option>
                       <option value="sold">Sold</option>
                       <option value="draft">Draft</option>
                     </select>
-                    <div class="form-focus-line"></div>
                   </div>
                 </div>
 
                 <!-- Form Actions -->
                 <div class="form-actions">
                   <button v-if="isEditing" type="button" @click="cancelEdit" class="cancel-btn">
-                    <i class="fas fa-times"></i> Cancel Edit
+                    Cancel
                   </button>
                   <button type="submit" class="submit-btn" :class="{ editing: isEditing }">
-                    <i :class="isEditing ? 'fas fa-save' : 'fas fa-plus'"></i>
                     {{ isEditing ? 'Update Vehicle' : 'Add Vehicle' }}
-                    <div class="btn-sparkle"><i class="fas fa-bolt"></i></div>
                   </button>
                 </div>
               </form>
@@ -193,19 +170,17 @@
           <div class="table-section">
             <div class="table-container">
               <div class="table-header">
-                <h3 class="table-title"><i class="fas fa-list"></i> Vehicle Inventory</h3>
-                <div class="table-actions">
-                  <button @click="fetchCars" class="refresh-btn">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                  </button>
-                </div>
+                <h3 class="table-title">Vehicle Inventory</h3>
+                <button @click="fetchCars" class="refresh-btn">
+                  Refresh
+                </button>
               </div>
 
               <div class="table-content">
                 <div v-if="cars.length === 0" class="empty-state">
                   <div class="empty-icon"><i class="fas fa-car-crash"></i></div>
                   <h3>No Vehicles Found</h3>
-                  <p>Start by adding your first vehicle to the inventory</p>
+                  <p>Add your first vehicle using the form above</p>
                 </div>
 
                 <div v-else class="enhanced-table">
@@ -213,46 +188,43 @@
                     <table class="vehicles-table">
                       <thead>
                         <tr>
-                          <th class="table-header-cell"><div class="header-content"><i class="fas fa-hashtag"></i> ID</div></th>
-                          <th class="table-header-cell"><div class="header-content"><i class="fas fa-store"></i> Dealer</div></th>
-                          <th class="table-header-cell"><div class="header-content"><i class="fas fa-tag"></i> Make</div></th>
-                          <th class="table-header-cell"><div class="header-content"><i class="fas fa-car"></i> Model</div></th>
-                          <th class="table-header-cell"><div class="header-content"><i class="fas fa-calendar"></i> Year</div></th>
-                          <th class="table-header-cell"><div class="header-content"><i class="fas fa-cogs"></i> Variant</div></th>
-                          <th class="table-header-cell"><div class="header-content"><i class="fas fa-image"></i> Image</div></th>
-                          <th class="table-header-cell"><div class="header-content"><i class="fas fa-actions"></i> Actions</div></th>
+                          <th>ID</th>
+                          <th>Dealer</th>
+                          <th>Make</th>
+                          <th>Model</th>
+                          <th>Year</th>
+                          <th>Price</th>
+                          <th>Image</th>
+                          <th>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr v-for="car in cars" :key="car.id" class="table-row" :class="{ 'editing-row': isEditing && editId === car.id }">
-                          <td class="table-cell id-cell">#{{ car.id }}</td>
-                          <td class="table-cell"><div class="dealer-info"><i class="fas fa-store"></i> <span>{{ car.dealer_id }}</span></div></td>
-                          <td class="table-cell"><span class="make-text">{{ car.make }}</span></td>
-                          <td class="table-cell"><span class="model-text">{{ car.model }}</span></td>
-                          <td class="table-cell"><span class="year-badge">{{ car.year }}</span></td>
-                          <td class="table-cell">
-                            <span v-if="car.variant" class="variant-tag">{{ car.variant }}</span>
-                            <span v-else class="variant-empty">-</span>
-                          </td>
-                          <td class="table-cell">
+                          <td class="id-cell">#{{ car.id }}</td>
+                          <td>{{ car.dealer_id }}</td>
+                          <td><strong>{{ car.make }}</strong></td>
+                          <td>{{ car.model }} {{ car.variant || '' }}</td>
+                          <td><span class="year-badge">{{ car.year }}</span></td>
+                          <td>₱{{ Number(car.price).toLocaleString() }}</td>
+                          <td>
                             <img
                               v-if="car.main_image"
-                              :src="car.main_image.startsWith('data:') ? car.main_image : 'http://localhost:8000' + car.main_image"
+                              :src="getCarImage(car.main_image)"
+                              @error="$event.target.src = '/default-car.jpg'"
                               alt="Car"
-                              width="60"
-                              style="border-radius: 8px; object-fit: cover;"
+                              width="80"
+                              height="60"
+                              class="rounded object-cover shadow"
                             />
-                            <span v-else class="variant-empty">No image</span>
+                            <span v-else class="text-gray-400 text-xs">No image</span>
                           </td>
-                          <td class="table-cell actions-cell">
+                          <td class="actions-cell">
                             <div class="action-buttons">
-                              <button @click="editCar(car)" class="action-btn edit-btn" :disabled="isEditing && editId !== car.id">
-                                <i class="fas fa-edit"></i> Edit
-                                <div class="btn-glow"></div>
+                              <button @click="editCar(car)" class="action-btn edit-btn" :disabled="isEditing">
+                                Edit
                               </button>
                               <button @click="deleteCar(car.id)" class="action-btn delete-btn" :disabled="isEditing">
-                                <i class="fas fa-trash"></i> Delete
-                                <div class="btn-glow"></div>
+                                Delete
                               </button>
                             </div>
                           </td>
@@ -274,7 +246,7 @@
         <div class="spinner-ring"></div>
         <div class="spinner-car"><i class="fas fa-car"></i></div>
       </div>
-      <p>Processing vehicle data...</p>
+      <p>{{ isEditing ? 'Updating...' : 'Adding vehicle...' }}</p>
     </div>
   </div>
 </template>
@@ -282,13 +254,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
+// Theme & State
 const theme = ref(localStorage.getItem('dashboard-theme') || 'dark')
 const loading = ref(false)
 const cars = ref([])
 const isEditing = ref(false)
 const editId = ref(null)
 
-// Form state
+// Form
 const form = ref({
   dealer_id: '',
   make: '',
@@ -303,172 +276,120 @@ const form = ref({
   color: '',
   main_image: '',
   description: '',
-  warranty_id: '',
   status: 'available'
 })
 
-// Image preview
 const previewImage = ref('')
 
-// Notification
-const showNotification = (message, type = 'info') => {
-  alert(`[${type.toUpperCase()}] ${message}`)
+// UNIVERSAL IMAGE HELPER (This fixes EVERYTHING)
+const getCarImage = (path) => {
+  if (!path) return '/default-car.jpg'
+  if (path.startsWith('http') || path.startsWith('data:')) return path
+  return path.startsWith('/') ? path : `/${path}`
 }
 
-// Handle image upload with validation
-const handleImageUpload = async (event) => {
-  const file = event.target.files[0]
+// Notification
+const notify = (msg, type = 'info') => {
+  alert(`[${type.toUpperCase()}] ${msg}`)
+}
+
+// Upload Image
+const handleImageUpload = async (e) => {
+  const file = e.target.files[0]
   if (!file) return
 
-  const maxSizeMB = 2
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
-
-  // Client-side validation
-  if (!allowedTypes.includes(file.type)) {
-    showNotification('Invalid file type. Only JPG and PNG allowed.', 'error')
-    resetImage()
+  if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+    notify('Only JPG & PNG allowed!', 'error')
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    notify('Image must be under 2MB!', 'error')
     return
   }
 
-  if (file.size / 1024 / 1024 > maxSizeMB) {
-    showNotification('File too large. Max 2MB allowed.', 'error')
-    resetImage()
-    return
-  }
-
-  // Show loading
   loading.value = true
-  showNotification('Uploading image...', 'info')
+  const formData = new FormData()
+  formData.append('main_image_file', file)
 
   try {
-    const formData = new FormData()
-    formData.append('main_image_file', file)
-
-    const res = await fetch('http://localhost:8000/upload-car-image', {
-      method: 'POST',
-      body: formData
-    })
-
+    const res = await fetch('/upload-car-image', { method: 'POST', body: formData })
     const data = await res.json()
 
     if (data.status === 'success') {
-      // Save URL from server
-      form.value.main_image = data.url  // e.g., /uploads/cars/1234567890_abc.jpg
-      previewImage.value = `http://localhost:8000${data.url}`
-      showNotification('Image uploaded successfully!', 'success')
+      form.value.main_image = data.url  // e.g., /uploads/cars/xxx.png
+      previewImage.value = getCarImage(data.url)
+      notify('Image uploaded!', 'success')
     } else {
-      showNotification(data.message || 'Upload failed', 'error')
-      resetImage()
+      notify(data.message || 'Upload failed', 'error')
     }
   } catch (err) {
-    console.error('Upload error:', err)
-    showNotification('Network error. Please try again.', 'error')
-    resetImage()
+    notify('Upload failed. Try again.', 'error')
   } finally {
     loading.value = false
   }
 }
 
-const resetImage = () => {
-  previewImage.value = ''
-  form.value.main_image = ''
-  const input = document.querySelector('input[type="file"]')
-  if (input) input.value = ''
-}
-
-// Edit car
-const editCar = (car) => {
-  isEditing.value = true
-  editId.value = car.id
-  form.value = { ...car }
-
-  if (car.main_image) {
-    previewImage.value = car.main_image.startsWith('data:')
-      ? car.main_image
-      : `http://localhost:8000${car.main_image}`
-  } else {
-    previewImage.value = ''
-  }
-
-  document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' })
-}
-
-// Cancel edit
-const cancelEdit = () => {
-  isEditing.value = false
-  editId.value = null
-  resetForm()
-}
-
-// Reset form
-const resetForm = () => {
-  form.value = {
-    dealer_id: '',
-    make: '',
-    model: '',
-    variant: '',
-    year: '',
-    type: '',
-    price: '',
-    mileage: '',
-    fuel_type: '',
-    transmission: '',
-    color: '',
-    main_image: '',
-    description: '',
-    warranty_id: '',
-    status: 'available'
-  }
-  resetImage()
-}
-
-// Fetch cars
+// CRUD Operations
+// PALITAN MO ANG BUONG fetchCars() NG GANITO:
 const fetchCars = async () => {
   loading.value = true
   try {
-    const res = await fetch('http://localhost:8000/listcars')
+    // GET USER FROM localStorage
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+
+    const res = await fetch('http://localhost:8000/listcars', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User': JSON.stringify(user)  // ← ITO ANG KULANG MO BRO!!!
+      }
+    })
+
     const data = await res.json()
-    if (data.status === 'success' && Array.isArray(data.cars)) {
-      cars.value = data.cars
+    if (data.status === 'success') {
+      cars.value = data.cars || []
     }
   } catch (err) {
-    console.error('Fetch error:', err)
+    console.error('Fetch cars error:', err)
+    notify('Failed to load cars', 'error')
   } finally {
     loading.value = false
   }
 }
 
-// Create car
 const createCar = async () => {
   loading.value = true
   try {
     const res = await fetch('http://localhost:8000/createcars', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+        headers: {
+        'Content-Type': 'application/json',
+        'X-User': JSON.stringify(user)  // ← ITO ANG KULANG MO BRO!!!
+      },
       body: JSON.stringify(form.value)
     })
     const data = await res.json()
     if (data.status === 'success') {
+      notify('Vehicle added successfully!', 'success')
       await fetchCars()
       resetForm()
-      showNotification('Vehicle added successfully!', 'success')
-    } else {
-      showNotification(data.message || 'Error adding vehicle', 'error')
-    }
+    } else notify(data.message || 'Failed to add', 'error')
   } catch (err) {
-    showNotification('Network error', 'error')
+    notify('Network error', 'error')
   } finally {
     loading.value = false
   }
 }
 
-// Update car
 const updateCar = async () => {
   loading.value = true
   try {
     const res = await fetch(`http://localhost:8000/updatecars/${editId.value}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+        headers: {
+        'Content-Type': 'application/json',
+        'X-User': JSON.stringify(user)  // ← ITO ANG KULANG MO BRO!!!
+      },
       body: JSON.stringify(form.value)
     })
     const data = await res.json()
@@ -486,26 +407,46 @@ const updateCar = async () => {
   }
 }
 
-// Delete car
 const deleteCar = async (id) => {
-  if (!confirm('Are you sure you want to delete this vehicle?')) return
+  if (!confirm('Delete this vehicle permanently?')) return
   loading.value = true
   try {
     const res = await fetch(`http://localhost:8000/deletecars/${id}`, { method: 'DELETE' })
     const data = await res.json()
     if (data.status === 'success') {
+      notify('Vehicle deleted', 'success')
       await fetchCars()
-      showNotification('Vehicle deleted successfully!', 'success')
-    } else {
-      showNotification(data.message || 'Error deleting vehicle', 'error')
     }
-  } catch (err) {
-    showNotification('Network error', 'error')
   } finally {
     loading.value = false
   }
 }
 
+const editCar = (car) => {
+  isEditing.value = true
+  editId.value = car.id
+  form.value = { ...car }
+  previewImage.value = getCarImage(car.main_image)
+  document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' })
+}
+
+const cancelEdit = () => {
+  isEditing.value = false
+  editId.value = null
+  resetForm()
+}
+
+const resetForm = () => {
+  form.value = {
+    dealer_id: '', make: '', model: '', variant: '', year: '', type: '',
+    price: '', mileage: '', fuel_type: '', transmission: '', color: '',
+    main_image: '', description: '', status: 'available'
+  }
+  previewImage.value = ''
+  if ($refs.imageInput) $refs.imageInput.value = ''
+}
+
+// Load on mount
 onMounted(fetchCars)
 </script>
 
@@ -1296,4 +1237,10 @@ onMounted(fetchCars)
     padding: 20px;
   }
 }
+.dashboard { min-height: 100vh; background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%); color: #ffffff; position: relative; overflow-x: hidden; }
+.background-glow { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 20% 80%, rgba(212, 0, 0, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(26, 26, 26, 0.1) 0%, transparent 50%); pointer-events: none; z-index: -1; }
+/* ... rest of your amazing styles ... */
+.image-upload-box { cursor: pointer; border: 2px dashed rgba(255,255,255,.2); border-radius: 12px; height: 180px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.03); transition: all .3s ease; position: relative; overflow: hidden; }
+.image-upload-box:hover { border-color: #d40000; background: rgba(255,255,255,.06); }
+.preview-img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
 </style>

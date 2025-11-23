@@ -283,8 +283,9 @@ export default {
         });
 
         const data = await response.json();
+        console.log(data);
 
-        if (data.success) {
+        if (data.status === 'succcess') {
           this.message = 'Registration successful! Welcome to AutoElite. Redirecting to login...';
           setTimeout(() => this.$router.push('/login'), 2000);
         } else {

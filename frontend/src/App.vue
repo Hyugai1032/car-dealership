@@ -13,10 +13,12 @@
     >
       <router-view :theme="theme" />
     </div>
+
   </div>
 </template>
 
 <script>
+
 import { ref } from 'vue'
 import Sidebar from './components/layout/Sidebars.vue'
 
@@ -33,6 +35,7 @@ export default {
 
     return { theme, toggleTheme }
   }
+
 }
 </script>
 

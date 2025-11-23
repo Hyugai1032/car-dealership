@@ -44,73 +44,61 @@ defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 */
 
 //$router->get('/', 'Welcome::index');
-//--- Appointment Routes ---
-$router->get('/api/appointments', 'AppointmentController::index');
-$router->get('/api/appointments/(:num)', 'AppointmentController::show/$1');
-$router->post('/api/appointments', 'AppointmentController::store');
-$router->put('/api/appointments/(:num)', 'AppointmentController::update/$1');
-$router->delete('/api/appointments/(:num)', 'AppointmentController::destroy/$1');
+// ===================================================================
+// AUTH & PUBLIC ROUTES
+// ===================================================================
+$router->post('/login', 'ApiController::login');
+$router->post('/logout', 'AuthController::logout');
+$router->post('/refresh', 'ApiController::refresh');
+$router->post('/otp', 'ApiController::sendVerificationCode');
+$router->post('/otp/verify', 'ApiController::verifyCode');
+$router->get('/email', 'ApiController::sendTestEmail'); // test only
+$router->post('/forgot-password', 'MailController::sendForgotPassword');
+$router->post('/reset-password', 'MailController::resetPassword');
+$router->post('/auth/google', 'AuthController::googleCallback');
+// ===================================================================
+// USER MANAGEMENT — CLEAN SINGULAR ROUTES (PRO LEVEL)
+// ===================================================================
+$router->group('/api/user', function () use ($router) {
+    $router->post('/create', 'ApiController::create');
+    $router->get('/list', 'ApiController::list');
+    $router->get('/profile', 'ApiController::profile');
+    $router->put('/update/{id}', 'ApiController::update');
+    $router->delete('/delete/{id}', 'ApiController::delete');
+});
 
+// ===================================================================
+// CARS MANAGEMENT
+// ===================================================================
+$router->get('/listcars', 'ApiController::listCars');
+$router->post('/createcars', 'ApiController::createCars');
+$router->put('/updatecars/{id}', 'ApiController::updateCars');
+$router->delete('/deletecars/{id}', 'ApiController::deleteCars');
+$router->get('/searchcars', 'ApiController::listCarsPaginated');
+$router->post('/upload-car-image', 'ApiController::uploadCarImage');
+$router->get('/cardistribution', 'ApiController::cardistribution');
+// ===================================================================
+// APPOINTMENTS
+// ===================================================================
+$router->post('/createappointment', 'ApiController::createAppointment');
+$router->get('/listappointment', 'ApiController::listAppointments');
+$router->put('/updateappointment/{id}', 'ApiController::updateAppointment');
+$router->delete('/deleteappointment/{id}', 'ApiController::deleteAppointment');
+$router->get('/get-booked-dates/{car_id}', 'ApiController::getBookedDates');
+$router->get('/dataappointments', 'ApiController::dataappointments');
+// ===================================================================
+// DEALERS MANAGEMENT
+// ===================================================================
+$router->get('/dealers', 'ApiController::listDealers');
+$router->post('/dealers', 'ApiController::createDealer');
+$router->put('/dealers/{id}', 'ApiController::updateDealer');
+$router->delete('/dealers/{id}', 'ApiController::deleteDealer');
+$router->post('/dealers/upload-logo', 'ApiController::uploadDealerLogo');
+// ===================================================================
+// FILES
+// ===================================================================
+$router->get('/download/{filename}', 'ApiController::downloadFile');
 
-//--- Car Routes ---
-$router->get('/api/cars', 'CarController::index');
-$router->get('/api/cars/(:num)', 'CarController::show/$1');
-$router->post('/api/cars', 'CarController::store');
-$router->put('/api/cars/(:num)', 'CarController::update/$1');
-$router->delete('/api/cars/(:num)', 'CarController::destroy/$1');
-
-//--- User Routes ---
-$router->post('/api/users/login', 'UsersController::login');  
-$router->get('/api/users/login', 'UsersController::login');        // Login user
-$router->get('/api/users/logout', 'UsersController::logout');        // Logout user
-$router->post('/api/users/register', 'UsersController::register');  // Register new user
-$router->get('/api/users', 'UsersController::list_users');          // List all users (admin/dealer filtered)
-$router->get('/api/users/me', 'UsersController::me');               // Get logged-in user info
-$router->put('/api/users/(:num)', 'UsersController::update/$1');    // Update user by ID
-$router->delete('/api/users/(:num)', 'UsersController::delete/$1'); // Delete user by ID
-
-//--- Dealer Routes ---
-$router->get('/api/dealers', 'DealersController::index');
-$router->get('/api/dealers/(:num)', 'DealersController::show/$1');
-$router->post('/api/dealers', 'DealersController::store');
-$router->put('/api/dealers/(:num)', 'DealersController::update/$1');
-$router->delete('/api/dealers/(:num)', 'DealersController::destroy/$1');
-
-//--- Warranty Routes ---
-$router->get('/api/warranties', 'WarrantiesController::index');
-$router->get('/api/warranties/(:num)', 'WarrantiesController::show/$1');
-$router->post('/api/warranties', 'WarrantiesController::store');
-$router->put('/api/warranties/(:num)', 'WarrantiesController::update/$1');
-$router->delete('/api/warranties/(:num)', 'WarrantiesController::destroy/$1');
-
-//--Services Routes --
-$router->get('/api/services', 'ServicesController::index');
-$router->get('/api/services/(:num)', 'ServicesController::show/$1');
-$router->get('/api/cars/(:num)/services', 'ServicesController::by_car/$1');
-$router->post('/api/services', 'ServicesController::store');
-$router->put('/api/services/(:num)', 'ServicesController::update/$1');
-$router->delete('/api/services/(:num)', 'ServicesController::destroy/$1');
-
-//---Payment Routes ---
-$router->get('/api/payments', 'PaymentsController::index'); // Get all payments. Admin can see all, dealers may see theirs, buyers can see their own.
-$router->get('/api/payments/(:num)', 'PaymentsController::show/$1'); // Get a specific payment by ID.
-$router->post('/api/payments', 'PaymentsController::store'); // Create a new payment record. Usually called when a buyer pays for a car.
-$router->put('/api/payments/(:num)', 'PaymentsController::update/$1'); // Update payment status or details (e.g., mark as succeeded).
-$router->delete('/api/payments/(:num)', 'PaymentsController::destroy/$1'); // Delete a payment (rare, maybe for cleanup or admin correction).
-
-
-//---Audit Logs Routes ---
-$router->get('/api/audit_logs', 'AuditLogsController::index'); // Get all audit logs (read-only). Usually admin only.
-$router->get('/api/audit_logs/(:num)', 'AuditLogsController::show/$1'); // Get a specific log by ID (read-only).
-// Note: No POST, PUT, DELETE routes for audit logs as they are system generated and read-only.
-
-//--- Inquiry Routes ---
-$router->get('/api/inquiries', 'InquiriesController::index'); // Get all inquiries. Admin sees all, dealers see theirs, buyers see their own messages.
-$router->get('/api/inquiries/(:num)', 'InquiriesController::show/$1'); // Get a single inquiry by ID.
-$router->post('/api/inquiries', 'InquiriesController::store'); // Submit a new inquiry. Usually from a buyer or visitor on a car page.
-$router->put('/api/inquiries/(:num)', 'InquiriesController::update/$1'); // Update inquiry status (e.g., contacted, closed).
-$router->delete('/api/inquiries/(:num)', 'InquiriesController::destroy/$1'); // Delete an inquiry (admin action).
-//--- End of routes ---
-
-
-
+// ===================================================================
+// CAR COMPARISON
+$router->post('/api/compare/cars', 'ApiController::compareCars');

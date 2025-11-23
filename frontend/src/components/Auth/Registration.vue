@@ -19,7 +19,7 @@
           <div class="brand-logo">
             <i class="fas fa-crown"></i>
           </div>
-          <h1 class="brand-title">AutoElite</h1>
+          <h1 class="brand-title">RideZone</h1>
           <p class="brand-tagline">Premium Automotive Management</p>
         </div>
         
@@ -126,9 +126,32 @@
         </button>
 
         <div class="login-redirect">
-          <p>Already have an account? <a href="#" @click.prevent="$router.push('/login')" class="login-link">Sign In</a></p>
+          <p>Already have an account? 
+            <router-link to="/login" class="login-link">Sign In</router-link>
+          </p>
         </div>
       </form>
+
+            <!-- Google Sign-In Button -->
+      <div class="google-login">
+        <div 
+          id="g_id_onload"
+          data-client_id="1084979266133-d1bvpmpb5devqn5cl0pscuv9k01l9p9t.apps.googleusercontent.com"
+          data-context="signin"
+          data-callback="handleGoogleLogin"
+          data-auto_prompt="false">
+        </div>
+
+        <div 
+          class="g_id_signin" 
+          data-type="standard"
+          data-size="large"
+          data-theme="outline"
+          data-text="signin_with"
+          data-shape="rectangular"
+          data-logo_alignment="left">
+        </div>
+      </div>
 
       <!-- Success/Error Message -->
       <div class="message-container" v-if="message">
@@ -249,7 +272,7 @@ export default {
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 2000));
         
-        const response = await fetch('http://localhost:8000/api/users/register', {
+        const response = await fetch('http://localhost:8000/api/user/create', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

@@ -1,0 +1,62 @@
+frontend/
+│
+├── public/
+│   └── index.html
+│
+├── src/
+│   ├── assets/
+│   │   └── images/
+│   │
+│   ├── components/
+|   |   |
+│   │   ├── Appointments/
+│   │   │   ├──AppointmentCard.vue
+│   │   │   ├──AppointmentModal.vue
+│   │   │   ├──AppointmentList.vue
+│   │   │   ├──BookingModal.vue
+│   │   │   ├──NavigationBar.vue
+│   │   │   ├──NotificationBar.vue
+│   │   |   └──StatusDashboard.vue
+│   │   ├── Auth/
+│   │   │   ├──Login.vue
+│   │   |   └──Registration.vue
+│   │   ├── Cars/
+│   │   |   └──CarsManagement.vue
+│   │   ├── dashboard/
+│   │   │   ├──ActivityFeed.vue
+│   │   │   ├──ChartsPanel.vue
+│   │   │   ├──HeroShowcase.vue
+│   │   |   └──StatsGrid.vue
+│   │   ├── layout/
+│   │   │     ├──WebPage/
+|   |   |     |    ├──FooterPage.vue
+|   |   |     |    └──HeaderPage.vue
+|   |   |     ├──Header.vue
+|   |   |     └──Slidebars.vue
+│   │   ├── notification/
+│   │   |   └──Notification.vue
+│   │   ├── ui/
+│   │   |   └──AdminDashboard.vue
+│   │   ├── WebPage/
+│   │   │   ├── HeaderPage.vue
+│   │   │   └── FooterPage.vue
+│   │   ├── Sidebars.vue
+│   │
+│   ├── router/
+│   │   └── index.js
+│   |---views/
+|   |     └──pages/
+│   |          ├── CarsPage.vue
+│   │          ├── AdminDashboard.vue
+│   │          ├── UserAppointments.vue
+│   │          ├── Dashboard.vue
+│   │          └── Users.vue
+│   │
+│   ├── style.css
+│   ├── App.vue
+│   └── main.js
+│
+├── .gitignore
+├── package.json
+├── package-lock.json
+└── README.md

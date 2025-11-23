@@ -1,7 +1,9 @@
 import { createApp } from 'vue'
 import App from './App.vue'
-import router from "./router/index.js";
-import Users from './Users.vue'
+import router from './router'
+import '@fortawesome/fontawesome-free/css/all.css'
+
+
 
 // Global CSS
 const styles = `
@@ -43,6 +45,10 @@ styleSheet.textContent = styles
 document.head.appendChild(styleSheet)
 
 // Create and mount the app
+<<<<<<< HEAD
+createApp(App).use(router).mount('#app')
+=======
 const app = createApp(App);
 app.use(router);
 app.mount("#app");
+>>>>>>> main

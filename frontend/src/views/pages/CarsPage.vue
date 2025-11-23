@@ -4,16 +4,16 @@
     <header class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-50">
       <h1 class="text-2xl font-semibold text-red-600">RideZone</h1>
       <nav class="space-x-6 text-gray-700 font-medium flex items-center">
-        <a href="#" class="hover:text-red-600">Home</a>
-        <a href="#" class="text-red-600 border-b-2 border-red-600">Cars</a>
+        <router-link to="/home" class="hover:text-red-600">Home</router-link>
+        <router-link to="/cars-page" class="text-red-600 border-b-2 border-red-600">Cars</router-link>
         <router-link to="/car-comparison" class="relative hover:text-red-600 flex items-center gap-1 font-bold">
           Compare
           <span v-if="compareIds.length" class="absolute -top-3 -right-4 bg-red-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center animate-pulse">
             {{ compareIds.length }}
           </span>
         </router-link>
-        <a href="#" class="hover:text-red-600">About</a>
-        <a href="#" class="hover:text-red-600">Contact</a>
+        <router-link to="/about" class="hover:text-red-600">About</router-link>
+        <router-link to="/contact" class="hover:text-red-600">Contact</router-link>
         <button @click="$router.push({ name: 'login' })" class="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium">
           Login
         </button>

@@ -13,6 +13,9 @@ import CarInventory from '../views/pages/CarInventory.vue'
 import Dealers from '../views/pages/Dealers.vue'
 import UserManagement from '../views/pages/UserManagement.vue'
 import CarComparison from '../views/pages/CarComparison.vue'
+import HomeView from '../views/HomeView.vue'
+import ContactPage from '../views/ContactPage.vue'
+import GoogleForm from  '../views/GoogleForm.vue'
 
 const routes = [
   { path: '/dashboard', name: 'dashboards', component: Dashboard },
@@ -26,7 +29,10 @@ const routes = [
   { path: '/car-inventory', name: 'car-inventorys', component: CarInventory },
   { path: '/dealers', name: 'dealer', component: Dealers },
   { path: '/user-management', name: 'user-management', component: UserManagement },
-  { path: '/car-comparison', name: 'car-comparison', component: CarComparison }
+  { path: '/car-comparison', name: 'car-comparison', component: CarComparison },
+  { path: '/home', name: 'home', component: HomeView },
+  { path: '/contact', name: 'contact', component: ContactPage },
+  { path: '/google-form', name: 'google-form', component: GoogleForm }
 ]
 
 const router = createRouter({
